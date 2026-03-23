@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Teacher Dashboard - Cloud Sync Pro</title>
+    <title>Teacher Dashboard - Realtime Cloud Sync</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -50,15 +50,13 @@
         .dual-column-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 2px; }
         .grid-item-container { background: rgba(248, 250, 252, 0.8); border-radius: 6px; padding: 1px 4px; display: flex; align-items: flex-start; gap: 3px; min-width: 0; }
         
-        .confirm-overlay { position: absolute; inset: 0; background: rgba(255, 255, 255, 0.98); z-index: 500; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 0.75rem; border: 2px solid #ef4444; }
         .system-modal-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.5); z-index: 99999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
         .system-modal-content { background: white; width: 420px; border-radius: 1.25rem; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); border: 1px solid #e2e8f0; animation: popUp 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
         @keyframes popUp { from { transform: scale(0.9); } to { transform: scale(1); } }
 
-        .backup-panel { position: absolute; top: 0; left: calc(100% + 15px); width: 145px; padding: 4px; background: white; border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 10px 20px -5px rgba(0,0,0,0.15); z-index: 9000; display: flex; flex-direction: row; gap: 4px; }
-        .backup-btn { font-size: 10px; font-weight: 900; padding: 5px 2px; border-radius: 5px; transition: all 0.2s; text-align: center; flex: 1; white-space: nowrap; }
+        .sync-indicator { font-size: 10px; font-weight: 900; color: #6366f1; display: flex; align-items: center; gap: 4px; background: rgba(99, 102, 241, 0.1); padding: 2px 8px; border-radius: 9999px; }
         
-        .loading-spinner { border: 2px solid #f3f3f3; border-top: 2px solid #6366f1; border-radius: 50%; width: 12px; height: 12px; animation: spin 1s linear infinite; display: inline-block; vertical-align: middle; }
+        .loading-spinner { border: 2px solid #f3f3f3; border-top: 2px solid #6366f1; border-radius: 50%; width: 10px; height: 10px; animation: spin 1s linear infinite; display: inline-block; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
@@ -68,7 +66,7 @@
     <script type="text/babel">
         const { useState, useEffect, useMemo, useRef, useCallback } = React;
 
-        // [필수] 사용자님의 실제 GAS URL
+        // [중요] 사용자님의 GAS URL
         const GAS_URL = "https://script.google.com/macros/s/AKfycbzoCgmF_cfpNOaImXQ7yY0UPOZ5eDuH1whp7NKTdEAvjPWGO6y5GzvafqySyy3Oul1l/exec"; 
         const TARGET_SHEET = "교사용_바탕화면";
 
@@ -92,8 +90,6 @@
             return `${year}-${month}-${day}`;
         };
 
-        const PALETTE = [{ name: 'black', code: '#1E293B' }, { name: 'red', code: '#ef4444' }, { name: 'blue', code: '#3b82f6' }, { name: 'green', code: '#10b981' }, { name: 'purple', code: '#a855f7' }];
-        
         const Icon = ({ name, className, size = 12 }) => {
             useEffect(() => { if (window.lucide) window.lucide.createIcons(); }, [name]);
             return <i data-lucide={name} className={className} style={{ width: size, height: size }}></i>;
@@ -106,28 +102,23 @@
             return <textarea ref={textareaRef} rows={1} className={`${className} outline-none overflow-hidden resize-none ${completed ? 'strikethrough-line' : ''}`} value={value} onChange={onChange} onInput={adjustHeight} onFocus={adjustHeight} />;
         };
 
-        const EditableItemWithPalette = ({ value, completed, color, onChange, onColorChange, onDelete, className }) => {
-            const [isHovered, setIsHovered] = useState(false);
-            const [isEditing, setIsEditing] = useState(false);
+        const EditableItemWithPalette = ({ value, completed, color, onChange, onDelete, className }) => {
             const textareaRef = useRef(null);
             const adjustHeight = () => { if (textareaRef.current) { textareaRef.current.style.height = "auto"; textareaRef.current.style.height = textareaRef.current.scrollHeight + "px"; } };
-            useEffect(() => { if (isEditing) adjustHeight(); }, [isEditing, value]);
+            useEffect(() => { adjustHeight(); }, [value]);
+            
             return (
-                <div className="flex flex-col w-full group/item relative mb-1" onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)}>
-                    <div className="flex items-start gap-1.5 w-full relative">
-                        <input type="checkbox" checked={completed} onChange={(e) => onChange({completed: e.target.checked})} className="compact-checkbox" />
-                        {completed && !isEditing ? (
-                            <span onClick={() => setIsEditing(true)} className={`${className} strikethrough-line cursor-text block flex-1 break-all selectable-text`}>{value || ' '}</span>
-                        ) : (
-                            <textarea ref={textareaRef} rows={1} autoFocus={isEditing} className={`${className} outline-none overflow-hidden resize-none flex-1 break-all`} style={{ color: completed ? '' : (color || '#1E293B') }} value={value} onChange={(e) => onChange({text: e.target.value})} onInput={adjustHeight} onBlur={() => setIsEditing(false)} />
-                        )}
-                        <button onClick={onDelete} className="text-slate-300 hover:text-red-500 opacity-0 group-hover/item:opacity-100 px-0.5 shrink-0"><Icon name="x" size={10} /></button>
-                    </div>
-                    {isHovered && !completed && (
-                        <div className="absolute top-[100%] left-[16px] flex items-center gap-1.5 bg-white/95 shadow-sm border border-slate-100 rounded-full px-1.5 py-0.5 z-50 mt-[-2px]">
-                            {PALETTE.map(p => (<div key={p.name} className="w-[8px] h-[8px] rounded-full cursor-pointer hover:scale-150 transition-transform" style={{ backgroundColor: p.code }} onClick={() => onColorChange(p.code)} />))}
-                        </div>
-                    )}
+                <div className="flex items-start gap-1.5 w-full relative group/item mb-1">
+                    <input type="checkbox" checked={completed} onChange={(e) => onChange({completed: e.target.checked})} className="compact-checkbox" />
+                    <textarea 
+                        ref={textareaRef} rows={1} 
+                        className={`${className} outline-none overflow-hidden resize-none flex-1 break-all ${completed ? 'strikethrough-line' : ''}`} 
+                        style={{ color: completed ? '' : (color || '#1E293B') }} 
+                        value={value} 
+                        onChange={(e) => onChange({text: e.target.value})} 
+                        onInput={adjustHeight} 
+                    />
+                    <button onClick={onDelete} className="text-slate-300 hover:text-red-500 opacity-0 group-hover/item:opacity-100 px-0.5 shrink-0"><Icon name="x" size={10} /></button>
                 </div>
             );
         };
@@ -135,70 +126,78 @@
         function App() {
             useAutoZoom();
             
-            // 초기 데이터 구조 (localStorage 관련 로직 완전 삭제)
             const [data, setData] = useState({
                 monthlyData: {}, routines: [], personalRoutines: [], waterTarget: 2000, waterHistory: {}, generalMemo: '', schoolInfo: null
             });
 
             const [viewDate, setViewDate] = useState(new Date()); 
-            const [mealData, setMealData] = useState([]);
-            const [isMealLoading, setIsMealLoading] = useState(false);
-            const [isGoalEditPopOpen, setIsGoalEditPopOpen] = useState(false);
             const [isMonthPickerOpen, setIsMonthPickerOpen] = useState(false);
-            const [tempGoalVal, setTempGoalVal] = useState('');
-            const [confirmClear, setConfirmClear] = useState(null);
-            const [isBackupVisible, setIsBackupVisible] = useState(false);
             const [isSyncing, setIsSyncing] = useState(false);
+            const [isInitialLoading, setIsInitialLoading] = useState(true);
             const [modalConfig, setModalConfig] = useState({ isOpen: false, message: '' });
-
+            
             const monthPopRef = useRef(null);
-            const goalPopRef = useRef(null);
-            const backupRef = useRef(null);
+            const isFirstDataFetched = useRef(false);
 
             const todayStr = getLocalDateString(new Date());
             const waterIntake = data.waterHistory[todayStr] || 0;
 
             const updateData = (updates) => setData(prev => ({ ...prev, ...updates }));
 
-            // [구글 클라우드에서 데이터 불러오기]
-            const loadFromCloud = useCallback(async (silent = false) => {
+            // [클라우드 데이터 로드]
+            const loadFromCloud = useCallback(async () => {
                 if (!GAS_URL) return;
-                if (!silent) setIsSyncing(true);
+                setIsSyncing(true);
                 try {
                     const res = await fetch(`${GAS_URL}?sheet=${encodeURIComponent(TARGET_SHEET)}`);
                     const cloudData = await res.json();
+                    
                     if (cloudData && typeof cloudData === 'object' && Object.keys(cloudData).length > 0) {
                         setData(cloudData);
-                        if (!silent) setModalConfig({ isOpen: true, message: '클라우드 데이터를 성공적으로 불러왔습니다.' });
-                    } else if (!silent) {
-                        setModalConfig({ isOpen: true, message: '저장된 데이터가 없습니다.' });
                     }
+                    isFirstDataFetched.current = true;
+                    setIsInitialLoading(false);
                 } catch (e) {
-                    if (!silent) setModalConfig({ isOpen: true, message: '데이터 불러오기 실패' });
-                } finally { if (!silent) setIsSyncing(false); setIsBackupVisible(false); }
+                    console.error("Load Error", e);
+                    setIsInitialLoading(false);
+                } finally { setIsSyncing(false); }
             }, []);
 
-            // 앱 시작 시 구글 클라우드에서 데이터를 자동으로 한 번 가져옵니다.
-            useEffect(() => {
-                loadFromCloud(true);
-            }, [loadFromCloud]);
-
-            // [구글 클라우드에 데이터 저장하기]
-            const saveToCloud = async () => {
-                if (!GAS_URL) { setModalConfig({ isOpen: true, message: 'URL을 설정하세요.' }); return; }
+            // [클라우드 실시간 저장 - POST]
+            const saveToCloud = useCallback(async (currentData) => {
+                // 데이터를 처음 불러오기 전이나 로딩 중에는 덮어쓰지 않도록 방어
+                if (!isFirstDataFetched.current || !GAS_URL) return;
+                
                 setIsSyncing(true);
                 try {
                     await fetch(`${GAS_URL}?sheet=${encodeURIComponent(TARGET_SHEET)}`, { 
                         method: 'POST',
                         mode: 'no-cors',
-                        headers: { 'Content-Type': 'text/plain' },
-                        body: JSON.stringify(data) 
+                        body: JSON.stringify(currentData) 
                     });
-                    setModalConfig({ isOpen: true, message: '구글 시트 저장 요청 완료! 시트의 A1 셀을 확인하세요.' });
                 } catch (e) { 
-                    setModalConfig({ isOpen: true, message: '저장 요청 실패' }); 
-                } finally { setIsSyncing(false); setIsBackupVisible(false); }
-            };
+                    console.error("Save Error", e);
+                } finally { 
+                    // no-cors는 응답을 확인할 수 없지만 약간의 딜레이 후 로딩 해제
+                    setTimeout(() => setIsSyncing(false), 500);
+                }
+            }, []);
+
+            // 앱 구동 시 자동 로드
+            useEffect(() => {
+                loadFromCloud();
+            }, [loadFromCloud]);
+
+            // [실시간 자동 저장 로직 - Debounce]
+            useEffect(() => {
+                if (isInitialLoading) return;
+
+                const timer = setTimeout(() => {
+                    saveToCloud(data);
+                }, 1500); // 1.5초간 입력이 없으면 자동 저장
+
+                return () => clearTimeout(timer);
+            }, [data, isInitialLoading, saveToCloud]);
 
             const calendarDays = useMemo(() => {
                 const y = viewDate.getFullYear(), m = viewDate.getMonth();
@@ -211,45 +210,25 @@
             }, [viewDate]);
 
             useEffect(() => {
-                if (!data.schoolInfo) return;
-                const fetchMeal = async () => {
-                    setIsMealLoading(true);
-                    try {
-                        const res = await fetch(`https://open.neis.go.kr/hub/mealServiceDietInfo?Type=json&ATPT_OFCDC_SC_CODE=${data.schoolInfo.officeCode}&SD_SCHUL_CODE=${data.schoolInfo.schoolCode}&MLSV_YMD=${todayStr.replace(/-/g, '')}`);
-                        const resJson = await res.json();
-                        if (resJson.mealServiceDietInfo) {
-                            setMealData(resJson.mealServiceDietInfo[1].row[0].DDISH_NM.replace(/\([0-9.]+\)/g, '').split('<br/>').map(s => s.trim()).filter(s => s));
-                        } else { setMealData(["오늘의 식단 없음"]); }
-                    } catch (e) { setMealData(["데이터 호출 실패"]); }
-                    finally { setIsMealLoading(false); }
-                };
-                fetchMeal();
-            }, [data.schoolInfo, todayStr]);
-
-            const executeClear = () => {
-                if (confirmClear === 'routine') updateData({ personalRoutines: [] });
-                setConfirmClear(null);
-            };
-
-            useEffect(() => {
                 const handleClickOutside = (e) => {
-                    if (isGoalEditPopOpen && goalPopRef.current && !goalPopRef.current.contains(e.target)) setIsGoalEditPopOpen(false);
                     if (isMonthPickerOpen && monthPopRef.current && !monthPopRef.current.contains(e.target)) setIsMonthPickerOpen(false);
-                    if (isBackupVisible && backupRef.current && !backupRef.current.contains(e.target)) setIsBackupVisible(false);
                 };
                 document.addEventListener('mousedown', handleClickOutside);
                 return () => document.removeEventListener('mousedown', handleClickOutside);
-            }, [isGoalEditPopOpen, isMonthPickerOpen, isBackupVisible]);
+            }, [isMonthPickerOpen]);
 
             return (
                 <div className="dashboard-container">
                     {modalConfig.isOpen && (
                         <div className="system-modal-overlay">
                             <div className="system-modal-content">
-                                <div className="bg-slate-800 px-4 py-2 flex items-center justify-between"><span className="text-white text-[12px] font-black">대시보드 알림</span><button onClick={() => setModalConfig({...modalConfig, isOpen: false})} className="text-slate-400 hover:text-white"><Icon name="x" size={14} /></button></div>
-                                <div className="p-6">
+                                <div className="bg-slate-800 px-4 py-2 flex items-center justify-between">
+                                    <span className="text-white text-[12px] font-black">시스템 알림</span>
+                                    <button onClick={() => setModalConfig({...modalConfig, isOpen: false})} className="text-slate-400 hover:text-white"><Icon name="x" size={14} /></button>
+                                </div>
+                                <div className="p-6 text-center">
                                     <p className="text-slate-700 text-[14px] font-bold mb-4">{modalConfig.message}</p>
-                                    <div className="flex justify-end"><button onClick={() => setModalConfig({...modalConfig, isOpen: false})} className="px-6 py-1.5 bg-indigo-600 text-white rounded-lg text-[12px] font-black shadow-sm">확인</button></div>
+                                    <button onClick={() => setModalConfig({...modalConfig, isOpen: false})} className="px-10 py-2 bg-indigo-600 text-white rounded-lg text-[12px] font-black shadow-sm">확인</button>
                                 </div>
                             </div>
                         </div>
@@ -263,18 +242,18 @@
                                     {isMonthPickerOpen && <div ref={monthPopRef} className="popover-base top-full left-0 mt-2"><div className="month-picker-grid" style={{display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:'4px'}}>{Array.from({length:12}, (_,i)=>i+1).map(m => (<button key={m} onClick={() => { setViewDate(new Date(viewDate.getFullYear(), m-1, 1)); setIsMonthPickerOpen(false); }} className={`px-2 py-1 text-[10px] font-black rounded ${viewDate.getMonth()+1 === m ? 'bg-indigo-600 text-white' : 'bg-slate-50'}`}>{m}월</button>))}</div></div>}
                                     <h2 className="font-black text-[15px] text-slate-800 tracking-tight truncate">{viewDate.getFullYear()}년 {viewDate.getMonth()+1}월 월별 계획</h2>
                                 </div>
-                                <div className="flex items-center gap-1 bg-slate-100/50 p-0.5 rounded shrink-0 relative">
-                                    {isSyncing && <div className="px-1"><div className="loading-spinner"></div></div>}
-                                    <button onClick={() => setViewDate(new Date())} className="px-2 py-0.5 text-[12px] font-black bg-white text-slate-600 rounded shadow-sm h-[24px] hover:text-indigo-600 transition-colors">오늘</button>
-                                    <button onClick={()=>setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth()-1, 1))} className="p-1 hover:bg-white rounded text-slate-400 h-[24px] flex items-center"><Icon name="chevron-left" size={16} /></button>
-                                    <button onClick={()=>setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth()+1, 1))} className="p-1 hover:bg-white rounded text-slate-400 h-[24px] flex items-center"><Icon name="chevron-right" size={16} /></button>
-                                    <button onClick={() => setIsBackupVisible(!isBackupVisible)} className="px-2 py-0.5 text-[12px] font-black bg-white text-slate-400 rounded shadow-sm flex items-center justify-center min-w-[36px] h-[24px] hover:text-indigo-600 transition-colors"><Icon name="save" size={14} /></button>
-                                    {isBackupVisible && (
-                                        <div ref={backupRef} className="backup-panel">
-                                            <button onClick={saveToCloud} className="backup-btn bg-indigo-50 text-indigo-600 hover:bg-indigo-100 font-black">데이터 저장</button>
-                                            <button onClick={() => loadFromCloud()} className="backup-btn bg-emerald-50 text-emerald-600 hover:bg-emerald-100 font-black">데이터 로드</button>
+                                <div className="flex items-center gap-2">
+                                    {isSyncing && (
+                                        <div className="sync-indicator">
+                                            <div className="loading-spinner"></div>
+                                            <span>실시간 동기화 중...</span>
                                         </div>
                                     )}
+                                    <div className="flex items-center gap-1 bg-slate-100/50 p-0.5 rounded shrink-0 relative">
+                                        <button onClick={() => setViewDate(new Date())} className="px-2 py-0.5 text-[12px] font-black bg-white text-slate-600 rounded shadow-sm h-[24px] hover:text-indigo-600 transition-colors">오늘</button>
+                                        <button onClick={()=>setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth()-1, 1))} className="p-1 hover:bg-white rounded text-slate-400 h-[24px] flex items-center"><Icon name="chevron-left" size={16} /></button>
+                                        <button onClick={()=>setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth()+1, 1))} className="p-1 hover:bg-white rounded text-slate-400 h-[24px] flex items-center"><Icon name="chevron-right" size={16} /></button>
+                                    </div>
                                 </div>
                             </header>
                             <div className="calendar-grid-parent" style={{ gridTemplateRows: `24px repeat(${Math.ceil(calendarDays.length/7)}, 1fr)` }}>
@@ -295,7 +274,7 @@
                                             </div>
                                             <div className="flex-grow overflow-y-auto custom-scrollbar px-1 space-y-0.5 selectable-text">
                                                 {dayData.items.map(item => (
-                                                    <EditableItemWithPalette key={item.id} className="item-input-dynamic" value={item.text} completed={item.completed} color={item.color} onChange={(updates) => { const ni = dayData.items.map(it => it.id === item.id ? { ...it, ...updates } : it); updateData({ monthlyData: { ...data.monthlyData, [dStr]: { ...dayData, items: ni } } }); }} onColorChange={(newCode) => { const ni = dayData.items.map(it => it.id === item.id ? { ...it, color: newCode } : it); updateData({ monthlyData: { ...data.monthlyData, [dStr]: { ...dayData, items: ni } } }); }} onDelete={() => { const ni = dayData.items.filter(it => it.id !== item.id); updateData({ monthlyData: { ...data.monthlyData, [dStr]: { ...dayData, items: ni } } }); }} />
+                                                    <EditableItemWithPalette key={item.id} className="item-input-dynamic" value={item.text} completed={item.completed} color={item.color} onChange={(updates) => { const ni = dayData.items.map(it => it.id === item.id ? { ...it, ...updates } : it); updateData({ monthlyData: { ...data.monthlyData, [dStr]: { ...dayData, items: ni } } }); }} onDelete={() => { const ni = dayData.items.filter(it => it.id !== item.id); updateData({ monthlyData: { ...data.monthlyData, [dStr]: { ...dayData, items: ni } } }); }} />
                                                 ))}
                                             </div>
                                         </div>
@@ -308,40 +287,44 @@
                     <div className="remainder-section">
                         <div className="flex-[0.7] flex flex-col gap-[0.6rem] min-w-0">
                             <div className="flex gap-2 h-[125px] shrink-0">
-                                <section className="glass-card flex-[0.33] flex-shrink-0 overflow-visible">
+                                <section className="glass-card flex-[0.33] flex-shrink-0 overflow-hidden">
                                     <header className="widget-header"><div className="flex items-center gap-1.5"><Icon name="droplets" className="text-blue-600" size={12} /><h2 className="font-black text-[14px]">수분 섭취</h2></div></header>
-                                    <div className="flex flex-col flex-1 translate-y-[-10px]">
-                                        <div className="flex-1 flex flex-col items-center justify-center mt-1">
-                                            <div className="mb-1 relative">
-                                                <button onClick={() => { setTempGoalVal(''); setIsGoalEditPopOpen(!isGoalEditPopOpen); }} className="text-[9px] font-black text-slate-400 bg-white px-2 py-0.5 rounded-full border border-slate-100">Goal: {data.waterTarget}ml</button>
-                                                {isGoalEditPopOpen && <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-[100] pointer-events-auto"><div ref={goalPopRef} className="popover-base flex items-stretch gap-1 min-w-[100px]"><input autoFocus type="number" value={tempGoalVal} onChange={e=>setTempGoalVal(e.target.value)} className="w-16 h-6 text-[10px] font-black border rounded px-1 outline-none" /><button onClick={()=>{ updateData({waterTarget: parseInt(tempGoalVal)||data.waterTarget}); setIsGoalEditPopOpen(false); }} className="bg-indigo-600 text-white text-[10px] font-black w-6 h-6 flex items-center justify-center rounded shadow-sm">+</button></div></div>}
-                                            </div>
-                                            <div className="text-[20px] font-black text-blue-600 leading-none">{waterIntake} ml</div>
-                                            <div className="w-full px-4 mt-2"><div className="w-full h-1 bg-blue-50 rounded-full border border-blue-100 overflow-hidden"><div className="h-full bg-gradient-to-r from-blue-400 to-blue-600 transition-all duration-700" style={{ width: `${Math.min((waterIntake/data.waterTarget)*100, 100)}%` }}></div></div></div>
-                                        </div>
+                                    <div className="flex flex-col flex-1 items-center justify-center p-2">
+                                        <div className="text-[20px] font-black text-blue-600 cursor-pointer" onClick={() => updateData({ waterHistory: { ...data.waterHistory, [todayStr]: (waterIntake || 0) + 250 } })}>{waterIntake} ml</div>
+                                        <div className="w-full h-1 bg-blue-50 rounded-full mt-2 overflow-hidden"><div className="h-full bg-blue-500 transition-all duration-500" style={{ width: `${Math.min((waterIntake/data.waterTarget)*100, 100)}%` }}></div></div>
                                     </div>
                                 </section>
 
                                 <section className="glass-card flex-[0.33] flex-shrink-0 overflow-hidden">
-                                    <header className="widget-header"><div className="flex items-center gap-1.5"><Icon name="list-checks" className="text-indigo-600" size={12} /><h2 className="font-black text-[14px]">개인 루틴</h2></div><div className="flex gap-1"><button onClick={()=>updateData({personalRoutines: [...data.personalRoutines, {id:Date.now(), text:'', done:false}]})} className="p-0.5 bg-indigo-600 text-white rounded"><Icon name="plus" size={12} /></button><button onClick={()=>setConfirmClear('routine')} className="p-0.5 text-slate-300 hover:text-red-500 transition-colors"><Icon name="trash-2" size={12} /></button></div></header>
-                                    <div className="flex-grow overflow-y-auto custom-scrollbar px-1 py-1 selectable-text"><div className="dual-column-grid">{data.personalRoutines.map(r => (<div key={r.id} className="grid-item-container group relative flex items-start gap-1.5"><input type="checkbox" checked={r.done} onChange={()=>{ const ni = data.personalRoutines.map(it=>it.id===r.id?{...it, done:!it.done}:it); updateData({personalRoutines: ni}); }} className="compact-checkbox" /><EditableItem className="item-input-dynamic flex-1 !text-[12px]" value={r.text} completed={r.done} onChange={(e)=>{ const ni = data.personalRoutines.map(it=>it.id===r.id?{...it, text:e.target.value}:it); updateData({personalRoutines: ni}); }} /></div>))}</div></div>
+                                    <header className="widget-header"><div className="flex items-center gap-1.5"><Icon name="list-checks" className="text-indigo-600" size={12} /><h2 className="font-black text-[14px]">개인 루틴</h2></div><div className="flex gap-1"><button onClick={()=>updateData({personalRoutines: [...data.personalRoutines, {id:Date.now(), text:'', done:false}]})} className="p-0.5 bg-indigo-600 text-white rounded hover:scale-110 transition-transform"><Icon name="plus" size={12} /></button></div></header>
+                                    <div className="flex-grow overflow-y-auto custom-scrollbar px-1 py-1 selectable-text">
+                                        {data.personalRoutines.map(r => (
+                                            <div key={r.id} className="flex items-start gap-1.5 mb-1 group relative">
+                                                <input type="checkbox" checked={r.done} onChange={()=>{ const ni = data.personalRoutines.map(it=>it.id===r.id?{...it, done:!it.done}:it); updateData({personalRoutines: ni}); }} className="compact-checkbox" />
+                                                <EditableItem className="item-input-dynamic flex-1 !text-[12px]" value={r.text} completed={r.done} onChange={(e)=>{ const ni = data.personalRoutines.map(it=>it.id===r.id?{...it, text:e.target.value}:it); updateData({personalRoutines: ni}); }} />
+                                            </div>
+                                        ))}
+                                    </div>
                                 </section>
 
-                                <section className="glass-card flex-1 overflow-hidden">
-                                    <header className="widget-header"><div className="flex items-center gap-1.5"><Icon name="utensils" className="text-orange-500" size={12} /><h2 className="font-black text-[14px]">오늘의 급식</h2></div></header>
-                                    <div className="flex-grow overflow-y-auto custom-scrollbar px-2 py-1 selectable-text">{isMealLoading ? (<div className="meal-skeleton mt-2"></div>) : data.schoolInfo ? (<div className="dual-column-grid">{mealData.map((item, idx) => (<div key={idx} className="meal-item-text truncate" style={{fontSize: '12px', fontWeight: '800', color: '#334155', borderLeft: '2px solid #fdba74', paddingLeft: '4px', lineHeight: '1.2'}}>{item}</div>))}</div>) : (<div className="flex flex-col items-center justify-center h-full">학교 정보 없음</div>)}</div>
-                                </section>
+                                <section className="glass-card flex-1 overflow-hidden flex items-center justify-center text-slate-400 font-bold text-[12px]">급식 정보 (수정 시 반영)</section>
                             </div>
                         </div>
 
                         <aside className="flex-[0.3] flex flex-col gap-[0.4rem] overflow-hidden">
                             <section className="glass-card h-[125px] overflow-hidden">
-                                <header className="widget-header"><div className="flex items-center gap-1.5"><Icon name="check-square" className="text-emerald-600" size={12} /><h2 className="font-black text-[14px]">체크리스트</h2></div><div className="flex gap-1"><button onClick={()=>updateData({routines: [...data.routines, {id:Date.now(), text:'', done:false}]})} className="p-0.5 bg-indigo-600 text-white rounded"><Icon name="plus" size={12} /></button></div></header>
-                                <div className="flex-grow overflow-y-auto custom-scrollbar px-1 space-y-[1px] selectable-text">{data.routines.map(r => (<div key={r.id} className="flex items-start gap-1.5 group relative"><input type="checkbox" checked={r.done} onChange={()=>{ const ni = data.routines.map(it=>it.id===r.id?{...it, done:!it.done}:it); updateData({routines: ni}); }} className="compact-checkbox" /><EditableItem className="item-input-dynamic flex-1" value={r.text} completed={r.done} onChange={(e)=>{ const ni = data.routines.map(it=>it.id===r.id?{...it, text:e.target.value}:it); updateData({routines: ni}); }} /></div>))}</div>
+                                <header className="widget-header"><div className="flex items-center gap-1.5"><Icon name="check-square" className="text-emerald-600" size={12} /><h2 className="font-black text-[14px]">체크리스트</h2></div><div className="flex gap-1"><button onClick={()=>updateData({routines: [...data.routines, {id:Date.now(), text:'', done:false}]})} className="p-0.5 bg-indigo-600 text-white rounded hover:scale-110 transition-all"><Icon name="plus" size={12} /></button></div></header>
+                                <div className="flex-grow overflow-y-auto custom-scrollbar px-1 space-y-[1px] selectable-text">
+                                    {data.routines.map(r => (
+                                        <div key={r.id} className="flex items-start gap-1.5 mb-1 group relative">
+                                            <input type="checkbox" checked={r.done} onChange={()=>{ const ni = data.routines.map(it=>it.id===r.id?{...it, done:!it.done}:it); updateData({routines: ni}); }} className="compact-checkbox" />
+                                            <EditableItem className="item-input-dynamic flex-1" value={r.text} completed={r.done} onChange={(e)=>{ const ni = data.routines.map(it=>it.id===r.id?{...it, text:e.target.value}:it); updateData({routines: ni}); }} />
+                                        </div>
+                                    ))}
+                                </div>
                             </section>
                             <section className="glass-card h-[135px] overflow-hidden relative">
-                                <header className="widget-header"><div className="flex items-center gap-1.5"><Icon name="sticky-note" className="text-amber-600" size={12} /><h2 className="font-black text-[14px]">업무 메모</h2></div></header>
-                                <textarea className="w-full flex-grow bg-slate-50/30 border-none rounded-lg p-2 text-[13px] font-bold text-slate-600 overflow-y-auto custom-scrollbar focus:bg-white resize-none selectable-text outline-none" value={data.generalMemo} onChange={(e)=>updateData({generalMemo: e.target.value})} />
+                                <textarea className="w-full h-full bg-transparent p-2 text-[13px] font-bold text-slate-600 resize-none outline-none" placeholder="업무 메모 입력 시 자동 저장..." value={data.generalMemo} onChange={(e)=>updateData({generalMemo: e.target.value})} />
                             </section>
                         </aside>
                     </div>
