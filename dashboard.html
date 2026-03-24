@@ -63,17 +63,18 @@
         .widget-header { display: flex; align-items: center; justify-content: space-between; height: 1.5rem; margin-top: 2px; margin-bottom: 0px; padding: 0 0.25rem; }
         .dual-column-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 2px; }
         
+        /* 개인 루틴 세로 폭 최소화 및 정렬 */
         .grid-item-container { 
             background: rgba(248, 250, 252, 0.8); 
             border-radius: 4px; 
-            padding: 1px 4px; 
+            padding: 0px 4px; 
             display: flex; 
             align-items: center; 
             gap: 6px; 
             min-width: 0; 
             cursor: grab; 
             overflow: visible !important; 
-            min-height: 16px; /* 더 축소 */
+            min-height: 16px; 
         }
         
         .sync-indicator { font-size: 10px; font-weight: 900; color: #6366f1; display: flex; align-items: center; gap: 4px; background: rgba(99, 102, 241, 0.1); padding: 2px 8px; border-radius: 9999px; }
@@ -148,7 +149,7 @@
 
             return (
                 <div className="flex flex-col w-full group/item relative mb-0.5">
-                    <div className={`calendar-item-row relative ${gapClass}`} onMouseDown={handleMouseDown}>
+                    <div className={`flex items-center w-full relative ${gapClass}`} onMouseDown={handleMouseDown}>
                         {!hideCheckbox && (
                             <input type="checkbox" checked={completed} onChange={(e) => onChange({completed: e.target.checked})} className="compact-checkbox" />
                         )}
@@ -306,6 +307,17 @@
                 updateData({ personalRoutines: copyListItems });
             };
 
+            useEffect(() => {
+                const handleClickOutside = (e) => {
+                    if (isMonthPickerOpen && monthPopRef.current && !monthPopRef.current.contains(e.target)) setIsMonthPickerOpen(false);
+                    if (isGoalEditPopOpen && goalPopRef.current && !goalPopRef.current.contains(e.target)) setIsGoalEditPopOpen(false);
+                    if (isAddWaterPopOpen && addPopRef.current && !addPopRef.current.contains(e.target)) setIsAddWaterPopOpen(false);
+                    if (isWaterHistoryOpen && waterPopRef.current && !waterPopRef.current.contains(e.target)) setIsWaterHistoryOpen(false);
+                };
+                document.addEventListener('mousedown', handleClickOutside);
+                return () => document.removeEventListener('mousedown', handleClickOutside);
+            }, [isMonthPickerOpen, isGoalEditPopOpen, isAddWaterPopOpen, isWaterHistoryOpen]);
+
             return (
                 <div className="dashboard-container">
                     <section className="calendar-section">
@@ -360,12 +372,12 @@
                     <div className="remainder-section">
                         <div className="flex-[0.7] flex flex-col gap-[0.6rem] min-w-0">
                             <div className="flex gap-2 h-[125px] shrink-0">
-                                <section className="glass-card flex-shrink-0 overflow-visible z-[20]" style={{ width: 'calc(33.33% - 10px)' }}>
+                                <section className="glass-card flex-shrink-0 overflow-visible z-[20] h-[125px]" style={{ width: 'calc(33.33% - 10px)' }}>
                                     <header className="widget-header">
                                         <div className="flex items-center gap-1.5"><Icon name="droplets" className="text-blue-600" size={12} /><h2 className="font-black text-[14px]">수분 섭취</h2></div>
                                         <button onClick={() => setIsWaterHistoryOpen(!isWaterHistoryOpen)} className="p-1 text-slate-300 hover:text-blue-600 transition-colors"><Icon name="calendar" size={12} /></button>
                                         {isWaterHistoryOpen && (
-                                            <div className="popover-base left-[calc(100%+15px)] top-0 mt-0 min-w-[210px] z-[99999]">
+                                            <div ref={waterPopRef} className="popover-base left-[calc(100%+10px)] top-0 mt-0 min-w-[210px] z-[99999]">
                                                 <div className="flex items-center justify-between px-2 border-b pb-1 mb-2">
                                                     <button onClick={(e) => {e.stopPropagation(); setWaterViewDate(new Date(waterViewDate.getFullYear(), waterViewDate.getMonth()-1, 1))}} className="text-slate-400 hover:text-blue-600"><Icon name="chevron-left" size={12}/></button>
                                                     <h3 className="text-[10px] font-black text-slate-800">{waterViewDate.getFullYear()}년 {waterViewDate.getMonth()+1}월</h3>
@@ -382,26 +394,23 @@
                                         )}
                                     </header>
                                     
-                                    {/* [수정] 수분 섭취 정밀 레이아웃 - 여백 4px 고정 및 균형 정렬 */}
-                                    <div className="flex flex-col flex-1 pb-[4px]"> 
-                                        {/* 제목 하단 3px 여백: mt-[3px] */}
-                                        <div className="flex flex-col items-center mt-[3px] space-y-1">
+                                    <div className="flex flex-col h-full px-1 pb-[4px] justify-start gap-1"> 
+                                        <div className="flex flex-col items-center">
                                             <div className="relative">
                                                 <button onClick={() => { setTempGoalVal(''); setIsGoalEditPopOpen(!isGoalEditPopOpen); }} className="text-[9px] font-black text-slate-400 bg-white px-2 py-0.5 rounded-full border border-slate-100">Goal: {data.waterTarget}ml</button>
-                                                {isGoalEditPopOpen && <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-[100] pointer-events-auto"><div className="popover-base flex items-stretch gap-1 min-w-[100px]"><input autoFocus type="number" value={tempGoalVal} onChange={e=>setTempGoalVal(e.target.value)} className="w-16 h-6 text-[10px] font-black border rounded px-1 outline-none" /><button onClick={()=>{ updateData({waterTarget: parseInt(tempGoalVal)||data.waterTarget}); setIsGoalEditPopOpen(false); }} className="bg-indigo-600 text-white text-[10px] font-black w-6 h-6 flex items-center justify-center rounded shadow-sm">+</button></div></div>}
+                                                {isGoalEditPopOpen && <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 z-[100] pointer-events-auto"><div ref={goalPopRef} className="popover-base flex items-stretch gap-1 min-w-[100px]"><input autoFocus type="number" value={tempGoalVal} onChange={e=>setTempGoalVal(e.target.value)} className="w-16 h-6 text-[10px] font-black border rounded px-1 outline-none" /><button onClick={()=>{ updateData({waterTarget: parseInt(tempGoalVal)||data.waterTarget}); setIsGoalEditPopOpen(false); }} className="bg-indigo-600 text-white text-[10px] font-black w-6 h-6 flex items-center justify-center rounded shadow-sm">+</button></div></div>}
                                             </div>
-                                            <div className="text-[18px] font-black text-blue-600 leading-none">{waterIntake} ml</div>
+                                            <div className="text-[18px] font-black text-blue-600 leading-none mt-0.5">{waterIntake} ml</div>
                                         </div>
 
-                                        {/* 상태바 */}
-                                        <div className="flex-1 flex items-center px-4">
+                                        <div className="w-full px-3 my-0.5">
                                             <div className="w-full water-bar-custom bg-blue-50 rounded-full border border-blue-100 overflow-hidden">
                                                 <div className="h-full bg-gradient-to-r from-blue-400 to-blue-600 transition-all duration-700" style={{ width: `${Math.min((waterIntake/data.waterTarget)*100, 100)}%` }}></div>
                                             </div>
                                         </div>
 
-                                        {/* 버튼 영역 */}
-                                        <div className="flex gap-1 w-full px-1 mt-auto">
+                                        {/* [수정] 버튼 위 여백을 절반으로 줄임: mt-auto 대신 명시적인 mt-1 적용 */}
+                                        <div className="flex gap-1 w-full mt-1">
                                             <button onClick={()=>addWater(250)} className="flex-1 bg-blue-50 text-blue-600 h-6 rounded text-[10px] font-black hover:bg-blue-100">+250ml</button>
                                             <button onClick={()=>addWater(500)} className="flex-1 bg-blue-600 text-white h-6 rounded text-[10px] font-black shadow-sm hover:bg-blue-700">+500ml</button>
                                             <div className="flex-1 relative">
@@ -413,7 +422,7 @@
                                     </div>
                                 </section>
 
-                                <section className="glass-card flex-shrink-0 overflow-hidden" style={{ width: 'calc(33.33% - 10px)' }}>
+                                <section className="glass-card flex-shrink-0 overflow-hidden h-[125px]" style={{ width: 'calc(33.33% - 10px)' }}>
                                     {confirmClear === 'routine' && <div className="confirm-overlay"><p className="text-[11px] font-black text-slate-800 mb-2">전체 삭제하시겠습니까?</p><div className="flex gap-2"><button onClick={executeClear} className="px-5 py-1.5 bg-red-500 text-white rounded-lg text-[10px] font-black shadow-sm hover:bg-red-600 transition-colors">예</button><button onClick={() => setConfirmClear(null)} className="px-5 py-1.5 bg-slate-200 text-slate-600 rounded-lg text-[10px] font-black">아니오</button></div></div>}
                                     <header className="widget-header"><div className="flex items-center gap-1.5"><Icon name="list-checks" className="text-indigo-600" size={12} /><h2 className="font-black text-[14px]">개인 루틴</h2></div><div className="flex gap-1"><button onClick={()=>updateData({personalRoutines: [...data.personalRoutines, {id:Date.now(), text:'', done:false}]})} className="p-0.5 bg-indigo-600 text-white rounded hover:scale-110 transition-transform"><Icon name="plus" size={12} /></button><button onClick={()=>setConfirmClear('routine')} className="p-0.5 text-slate-300 hover:text-red-500 transition-colors"><Icon name="trash-2" size={12} /></button></div></header>
                                     <div className="flex-grow overflow-y-auto custom-scrollbar px-1 py-1 selectable-text">
@@ -422,7 +431,8 @@
                                                 <div key={r.id} draggable onDragStart={() => handleDragStart(idx)} onDragEnter={() => handleDragEnter(idx)} onDragEnd={handleDragEnd} onDragOver={(e) => e.preventDefault()} className="grid-item-container group relative flex items-center">
                                                     <EditableItem 
                                                         className="item-input-dynamic flex-1 !text-[12px]" value={r.text} completed={r.done} color={r.color}
-                                                        showPalette={false} gapClass="gap-1.5"
+                                                        showPalette={false} 
+                                                        gapClass="gap-[6px]"
                                                         onChange={(updates) => { const ni = data.personalRoutines.map(it => it.id === r.id ? { ...it, ...updates } : it); updateData({ personalRoutines: ni }); }}
                                                         onDelete={() => { const ni = data.personalRoutines.filter(it => it.id !== r.id); updateData({ personalRoutines: ni }); }} />
                                                 </div>
@@ -431,7 +441,7 @@
                                     </div>
                                 </section>
 
-                                <section className="glass-card flex-1 overflow-hidden">
+                                <section className="glass-card flex-1 overflow-hidden h-[125px]">
                                     <header className="widget-header"><div className="flex items-center gap-1.5"><Icon name="utensils" className="text-orange-500" size={12} /><h2 className="font-black text-[14px]">오늘의 급식</h2></div><button onClick={() => { setIsSchoolSearchMode(!isSchoolSearchMode); setSchoolSearchTerm(''); setSchoolSearchResults([]); }} className={`p-1 transition-colors ${isSchoolSearchMode ? 'text-indigo-600' : 'text-slate-300 hover:text-indigo-600'}`}><Icon name={isSchoolSearchMode ? 'chevron-left' : 'settings'} size={14} /></button></header>
                                     <div className="flex-grow overflow-y-auto custom-scrollbar px-2 py-1 selectable-text">
                                         {isSchoolSearchMode ? (
@@ -456,7 +466,7 @@
                                 <header className="widget-header"><div className="flex items-center gap-1.5"><Icon name="check-square" className="text-emerald-600" size={12} /><h2 className="font-black text-[14px]">체크리스트</h2></div><div className="flex gap-1"><button onClick={()=>updateData({routines: [...data.routines, {id:Date.now(), text:'', done:false}]})} className="p-0.5 bg-indigo-600 text-white rounded hover:scale-110 transition-all"><Icon name="plus" size={12} /></button><button onClick={()=>setConfirmClear('checklist')} className="p-0.5 text-slate-300 hover:text-red-500"><Icon name="trash-2" size={12} /></button></div></header>
                                 <div className="flex-grow overflow-y-auto custom-scrollbar px-1 space-y-0 selectable-text">
                                     {data.routines.map(r => (
-                                        <div key={r.id} className="flex items-center group relative min-h-[18px]">
+                                        <div key={r.id} className="flex items-center group relative min-h-[16px]">
                                             <div className="flex-1">
                                                 <EditableItem 
                                                     className="item-input-dynamic" value={r.text} completed={r.done} color={r.color} showPalette={false} gapClass="gap-1.5"
