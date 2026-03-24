@@ -136,13 +136,33 @@
         .calendar-item-row { display: flex; align-items: flex-start; width: 100%; gap: 6px; min-height: 18.8px; position: relative; }
         .delete-btn-box { display: flex; align-items: center; justify-content: center; height: 16.8px; width: 18px; }
 
-        /* 예산 현황 표 스타일 (중앙 정렬 수정) */
+        /* 예산 현황 표 스타일 (중앙 정렬) */
         .budget-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 10px; }
         .budget-table th { background: #f8fafc; color: #64748b; font-weight: 900; padding: 4px 2px; border-bottom: 1px solid #e2e8f0; text-align: center; position: sticky; top: 0; z-index: 10; }
         .budget-table td { padding: 4px 2px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; line-height: 1.2; text-align: center; }
         .budget-name { font-weight: 800; color: #334155; }
         .budget-amount { font-family: 'Pretendard', monospace; font-weight: 700; color: #64748b; text-align: center; }
         .budget-balance { color: #6366f1; font-weight: 800; text-align: center; }
+
+        /* 디데이 스타일 */
+        .dday-badge {
+            cursor: pointer;
+            background: #6366f1;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 9999px;
+            font-size: 11px;
+            font-weight: 900;
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(99, 102, 241, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .dday-badge:hover { transform: scale(1.05); background: #4f46e5; }
+        .dday-input-group { display: flex; flex-direction: column; gap: 8px; min-width: 180px; }
+        .dday-field { border: 1px solid #e2e8f0; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 800; outline: none; width: 100%; }
+        .dday-field:focus { border-color: #6366f1; }
     </style>
 </head>
 <body>
@@ -154,6 +174,7 @@
         const GAS_URL = "https://script.google.com/macros/s/AKfycbzoCgmF_cfpNOaImXQ7yY0UPOZ5eDuH1whp7NKTdEAvjPWGO6y5GzvafqySyy3Oul1l/exec"; 
         const DASHBOARD_SHEET = "교사용_바탕화면";
         const BUDGET_SHEET = "교사용_예산";
+        const BUDGET_SITE_URL = "https://sueb10043-tech.github.io/schoolbudget/";
 
         const PALETTE = [{ name: 'black', code: '#1E293B' }, { name: 'red', code: '#ef4444' }, { name: 'blue', code: '#3b82f6' }, { name: 'green', code: '#10b981' }, { name: 'purple', code: '#a855f7' }];
         const BG_PALETTE = [{ name: 'pink', code: '#FFF1F2' }, { name: 'sky', code: '#F0F9FF' }, { name: 'green', code: '#F0FDF4' }, { name: 'reset', code: '#FFFFFF', icon: 'rotate-ccw' }];
@@ -224,11 +245,10 @@
 
         function App() {
             useAutoZoom();
-            const [data, setData] = useState({ monthlyData: {}, routines: [], personalRoutines: [], waterTarget: 2000, waterHistory: {}, waterHistoryLogs: {}, generalMemo: '', schoolInfo: null, lastResetDate: "" });
+            const [data, setData] = useState({ monthlyData: {}, routines: [], personalRoutines: [], waterTarget: 2000, waterHistory: {}, waterHistoryLogs: {}, generalMemo: '', schoolInfo: null, lastResetDate: "", dDayDate: "", dDayTitle: "" });
             const [budgetData, setBudgetData] = useState({ budgets: [], transactions: [] });
             const [isBudgetLoading, setIsBudgetLoading] = useState(false);
             const [now, setNow] = useState(new Date());
-            
             useEffect(() => {
                 const timer = setInterval(() => setNow(new Date()), 30000);
                 return () => clearInterval(timer);
@@ -244,8 +264,7 @@
             const [isAddWaterPopOpen, setIsAddWaterPopOpen] = useState(false);
             const [isWaterHistoryOpen, setIsWaterHistoryOpen] = useState(false);
             const [isSchoolSearchMode, setIsSchoolSearchMode] = useState(false);
-            const [schoolSearchTerm, setSchoolSearchTerm] = useState('');
-            const [schoolSearchResults, setSchoolSearchResults] = useState([]);
+            const [isDDayPopOpen, setIsDDayPopOpen] = useState(false);
             const [mealData, setMealData] = useState([]);
             const [isMealLoading, setIsMealLoading] = useState(false);
             const [confirmClear, setConfirmClear] = useState(null);
@@ -253,7 +272,8 @@
             const [customWaterVal, setCustomWaterVal] = useState('');
             const [activePalette, setActivePalette] = useState(null); 
 
-            const monthPopRef = useRef(null); const goalPopRef = useRef(null); const addPopRef = useRef(null); const waterPopRef = useRef(null); const paletteRef = useRef(null);
+            const monthPopRef = useRef(null); const goalPopRef = useRef(null); const addPopRef = useRef(null); 
+            const waterPopRef = useRef(null); const paletteRef = useRef(null); const ddayPopRef = useRef(null);
 
             const waterIntake = data.waterHistory[todayStr] || 0;
             const waterLogs = data.waterHistoryLogs[todayStr] || [];
@@ -356,10 +376,7 @@
                 const lastAmount = waterLogs[waterLogs.length - 1];
                 const newIntake = Math.max(0, (waterIntake || 0) - lastAmount);
                 const newLogs = waterLogs.slice(0, -1);
-                updateData({ 
-                    waterHistory: { ...data.waterHistory, [todayStr]: newIntake }, 
-                    waterHistoryLogs: { ...data.waterHistoryLogs, [todayStr]: newLogs } 
-                });
+                updateData({ waterHistory: { ...data.waterHistory, [todayStr]: newIntake }, waterHistoryLogs: { ...data.waterHistoryLogs, [todayStr]: newLogs } });
             };
 
             const dragItem = useRef(null); const dragOverItem = useRef(null);
@@ -373,17 +390,28 @@
                 updateData({ personalRoutines: copyListItems });
             };
 
+            const dDayValue = useMemo(() => {
+                if (!data.dDayDate) return null;
+                const target = new Date(data.dDayDate);
+                const today = new Date(todayStr);
+                const diff = target - today;
+                const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
+                if (days === 0) return "D-Day";
+                return days > 0 ? `D-${days}` : `D+${Math.abs(days)}`;
+            }, [data.dDayDate, todayStr]);
+
             useEffect(() => {
                 const handleClickOutside = (e) => {
                     if (isMonthPickerOpen && monthPopRef.current && !monthPopRef.current.contains(e.target)) setIsMonthPickerOpen(false);
                     if (isGoalEditPopOpen && goalPopRef.current && !goalPopRef.current.contains(e.target)) setIsGoalEditPopOpen(false);
                     if (isAddWaterPopOpen && addPopRef.current && !addPopRef.current.contains(e.target)) setIsAddWaterPopOpen(false);
                     if (isWaterHistoryOpen && waterPopRef.current && !waterPopRef.current.contains(e.target)) setIsWaterHistoryOpen(false);
+                    if (isDDayPopOpen && ddayPopRef.current && !ddayPopRef.current.contains(e.target)) setIsDDayPopOpen(false);
                     if (activePalette && paletteRef.current && !paletteRef.current.contains(e.target)) { if (!e.target.closest('textarea')) setActivePalette(null); }
                 };
                 document.addEventListener('mousedown', handleClickOutside);
                 return () => document.removeEventListener('mousedown', handleClickOutside);
-            }, [isMonthPickerOpen, isGoalEditPopOpen, isAddWaterPopOpen, isWaterHistoryOpen, activePalette]);
+            }, [isMonthPickerOpen, isGoalEditPopOpen, isAddWaterPopOpen, isWaterHistoryOpen, isDDayPopOpen, activePalette]);
 
             const handleRequestPalette = (id, pos, sectionInfo, isRefresh = false) => {
                 if (isRefresh) setActivePalette(prev => prev && prev.id === id ? { ...prev, pos } : prev);
@@ -426,6 +454,21 @@
                                             </div>
                                         )}
                                         <h2 className="font-black text-[15px] text-slate-800 tracking-tight truncate">{viewDate.getFullYear()}년 {viewDate.getMonth()+1}월 월별 계획</h2>
+                                        <div className="relative ml-4">
+                                            <button onClick={() => setIsDDayPopOpen(!isDDayPopOpen)} className="dday-badge">
+                                                <Icon name="flag" size={10} />
+                                                <span>{data.dDayDate ? `${data.dDayTitle || '이벤트'} ${dDayValue}` : "D-Day 설정"}</span>
+                                            </button>
+                                            {isDDayPopOpen && (
+                                                <div ref={ddayPopRef} className="popover-base top-full left-0 mt-2">
+                                                    <div className="dday-input-group">
+                                                        <div className="flex flex-col gap-1"><label className="text-[9px] font-black text-slate-400">내용</label><input type="text" className="dday-field" placeholder="방학, 시험 등" value={data.dDayTitle} onChange={(e) => updateData({ dDayTitle: e.target.value })} /></div>
+                                                        <div className="flex flex-col gap-1"><label className="text-[9px] font-black text-slate-400">날짜</label><input type="date" className="dday-field" value={data.dDayDate} onChange={(e) => updateData({ dDayDate: e.target.value })} /></div>
+                                                        <button onClick={() => setIsDDayPopOpen(false)} className="bg-indigo-600 text-white text-[10px] font-black py-1.5 rounded-md mt-1">확인</button>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
                                     <div className="flex items-center gap-2">
                                         {isSyncing && <div className="sync-indicator"><div className="loading-spinner"></div><span>동기화 중...</span></div>}
@@ -448,13 +491,27 @@
                                                 <div className="flex items-start mb-0.5 px-0 shrink-0 h-[20px] overflow-visible">
                                                     <div className="flex items-center gap-1 flex-1 min-w-0 h-[20px]">
                                                         <span className={`text-[12px] font-black h-[20px] leading-[20px] shrink-0 ${date.getDay()===0?'text-red-500':date.getDay()===6?'text-indigo-500':'text-slate-400'}`}>{date.getDate()}</span>
-                                                        <input type="text" value={dayData.holiday || ''} onChange={(e) => updateData({monthlyData: {...data.monthlyData, [dStr]: {...dayData, holiday: e.target.value}}})} className="bg-transparent border-none text-[11px] font-black text-blue-600 outline-none w-full h-[20px] leading-[20px]" />
+                                                        <input 
+                                                            type="text" 
+                                                            value={dayData.holiday || ''} 
+                                                            onChange={(e) => updateData({monthlyData: {...data.monthlyData, [dStr]: {...dayData, holiday: e.target.value}}})} 
+                                                            /* [복구] 배경색이 핑크색(#FFF1F2)이면 글자색을 빨간색(#ef4444)으로, 아니면 파란색(#2563eb)으로 자동 변경 */
+                                                            style={{ color: dayData.bgColor === '#FFF1F2' ? '#ef4444' : '#2563eb' }}
+                                                            className="bg-transparent border-none text-[11px] font-black outline-none w-full h-[20px] leading-[20px]" 
+                                                        />
                                                     </div>
                                                     <button onClick={()=>{ const cur = data.monthlyData[dStr] || { items: [] }; updateData({monthlyData: {...data.monthlyData, [dStr]: {...cur, items: [...cur.items, {id:Date.now(), text:'', completed:false, color:'#1E293B'}]}}}); }} className="opacity-0 group-hover:opacity-100 p-0.5 bg-indigo-600 text-white rounded transition-all h-[16px] flex items-center mt-[2px] shrink-0"><Icon name="plus" size={8} /></button>
                                                 </div>
                                                 <div className="flex-grow overflow-y-auto custom-scrollbar px-0 space-y-0.5 selectable-text" style={{ overflowX: 'hidden' }}>
                                                     {dayData.items.map(item => (
                                                         <EditableItem key={item.id} id={item.id} className="item-input-dynamic" value={item.text} completed={item.completed} color={item.color} showPalette={true} gapClass="gap-1.5" activePaletteId={activePalette?.id} sectionInfo={{ type: 'monthlyData', dateStr: dStr }} onRequestPalette={handleRequestPalette} onChange={(updates) => { const ni = dayData.items.map(it => it.id === item.id ? { ...it, ...updates } : it); updateData({ monthlyData: { ...data.monthlyData, [dStr]: { ...dayData, items: ni } } }); }} onDelete={() => { const ni = dayData.items.filter(it => it.id !== item.id); updateData({ monthlyData: { ...data.monthlyData, [dStr]: { ...dayData, items: ni } } }); }} />
+                                                    ))}
+                                                </div>
+                                                <div className="absolute bottom-1 right-1 opacity-0 group-hover:opacity-100 flex gap-1 bg-white/80 p-1 rounded-lg shadow-sm transition-opacity z-20">
+                                                    {BG_PALETTE.map(p => (
+                                                        <button key={p.name} className="w-3.5 h-3.5 rounded-full border border-slate-200 flex items-center justify-center hover:scale-125 transition-transform" style={{ backgroundColor: p.code }} onClick={() => updateData({monthlyData: {...data.monthlyData, [dStr]: {...dayData, bgColor: p.code}}})}>
+                                                            {p.icon && <Icon name={p.icon} size={8} className="text-slate-400" />}
+                                                        </button>
                                                     ))}
                                                 </div>
                                             </div>
@@ -495,11 +552,7 @@
                                             </div>
                                             <div className="text-[18px] font-black text-blue-600 leading-none mt-0.5">{waterIntake} ml</div>
                                         </div>
-                                        <div className="w-full px-3 my-0.5">
-                                            <div className="w-full water-bar-custom bg-blue-50 rounded-full border border-blue-100 overflow-hidden">
-                                                <div className="h-full bg-gradient-to-r from-blue-400 to-blue-600 transition-all duration-700" style={{ width: `${Math.min((waterIntake/data.waterTarget)*100, 100)}%` }}></div>
-                                            </div>
-                                        </div>
+                                        <div className="w-full px-3 my-0.5"><div className="w-full water-bar-custom bg-blue-50 rounded-full border border-blue-100 overflow-hidden"><div className="h-full bg-gradient-to-r from-blue-400 to-blue-600 transition-all duration-700" style={{ width: `${Math.min((waterIntake/data.waterTarget)*100, 100)}%` }}></div></div></div>
                                         <div className="flex gap-1 w-full mt-1">
                                             <button onClick={()=>addWater(250)} className="flex-1 bg-blue-50 text-blue-600 h-6 rounded text-[10px] font-black hover:bg-blue-100">+250</button>
                                             <button onClick={()=>addWater(500)} className="flex-1 bg-blue-600 text-white h-6 rounded text-[10px] font-black shadow-sm hover:bg-blue-700">+500</button>
@@ -561,25 +614,18 @@
                             <div className="flex gap-[0.5rem] w-full items-stretch">
                                 <div className="flex-shrink-0" style={{ width: '175px' }}></div>
                                 <div className="flex-shrink-0" style={{ width: '270px' }}></div>
-
                                 <section className="glass-card flex-shrink-0 overflow-hidden h-[135px]" style={{ width: '260px' }}>
                                     <header className="widget-header">
                                         <div className="flex items-center gap-1.5"><Icon name="wallet" className="text-blue-500" size={12} /><h2 className="font-black text-[14px]">예산 현황</h2></div>
-                                        <div className="flex items-center gap-1">
-                                            {isBudgetLoading && <div className="loading-spinner"></div>}
-                                            <button onClick={fetchBudgetData} className="p-0.5 text-slate-300 hover:text-blue-500 transition-colors"><Icon name="rotate-cw" size={12} /></button>
-                                        </div>
+                                        <div className="flex items-center gap-1">{isBudgetLoading && <div className="loading-spinner"></div>}<button onClick={fetchBudgetData} title="새로고침" className="p-0.5 text-slate-300 hover:text-blue-500 transition-colors"><Icon name="rotate-cw" size={12} /></button><a href={BUDGET_SITE_URL} target="_blank" rel="noopener noreferrer" title="지출 내역 작성" className="p-0.5 text-slate-300 hover:text-blue-500 transition-colors"><Icon name="external-link" size={12} /></a></div>
                                     </header>
                                     <div className="flex-grow overflow-y-auto custom-scrollbar">
-                                        <table className="budget-table">
-                                            <thead><tr><th>예산명</th><th>사용금액</th><th>잔액</th></tr></thead>
-                                            <tbody>
-                                                {budgetData.budgets.map(b => {
-                                                    const used = budgetData.transactions.filter(t => t.budgetId === b.id).reduce((acc, curr) => acc + (curr.amount || 0), 0);
-                                                    return (<tr key={b.id}><td className="budget-name">{b.name}</td><td className="budget-amount">{formatKRW(used)}</td><td className="budget-balance">{formatKRW((b.plannedAmount || 0) - used)}</td></tr>);
-                                                })}
-                                            </tbody>
-                                        </table>
+                                        <table className="budget-table"><thead><tr><th>예산명</th><th>사용금액</th><th>잔액</th></tr></thead><tbody>
+                                            {budgetData.budgets.map(b => {
+                                                const used = budgetData.transactions.filter(t => t.budgetId === b.id).reduce((acc, curr) => acc + (curr.amount || 0), 0);
+                                                return (<tr key={b.id}><td className="budget-name">{b.name}</td><td className="budget-amount">{formatKRW(used)}</td><td className="budget-balance">{formatKRW((b.plannedAmount || 0) - used)}</td></tr>);
+                                            })}
+                                        </tbody></table>
                                     </div>
                                 </section>
 
