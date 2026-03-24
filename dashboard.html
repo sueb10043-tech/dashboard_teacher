@@ -45,7 +45,7 @@
         .dashboard-container::-webkit-scrollbar { display: none; }
 
         .calendar-section { height: 750px; display: flex; flex-direction: column; padding: 0.5rem; flex-shrink: 0; overflow: visible; z-index: 10; }
-        .remainder-section { height: auto; padding: 0.2rem 0.5rem 0.5rem 0.5rem; display: flex; gap: 0.5rem; flex-shrink: 0; width: 100%; overflow: visible; position: relative; z-index: 5; }
+        .remainder-section { height: auto; padding: 0.2rem 0.5rem 0.5rem 0.5rem; display: flex; flex-direction: column; gap: 0.5rem; flex-shrink: 0; width: 100%; overflow: visible; position: relative; z-index: 5; }
         .glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(8px); border: 1px solid rgba(203, 213, 225, 0.5); border-radius: 0.75rem; box-shadow: 0 4px 12px rgba(0,0,0,0.08); display: flex; flex-direction: column; min-height: 0; position: relative; }
         
         .calendar-grid-parent { 
@@ -55,11 +55,19 @@
         
         .header-cell { background-color: #F8FAFC; font-size: 12px; font-weight: 900; display: flex; align-items: center; justify-content: center; height: 24px; text-transform: uppercase; }
         
-        /* 왼쪽 여백 7px, 오른쪽 여백 2px 철저 유지 */
         .table-cell { 
-            background: white; display: flex; flex-direction: column; 
-            padding-top: 2px; padding-bottom: 2px; padding-left: 7px; padding-right: 2px;
-            min-width: 0; overflow-x: hidden !important; overflow-y: hidden; position: relative; transition: background-color 0.2s; 
+            background: white; 
+            display: flex; 
+            flex-direction: column; 
+            padding-top: 2px;
+            padding-bottom: 2px;
+            padding-left: 7px;
+            padding-right: 2px;
+            min-width: 0; 
+            overflow-x: hidden !important; 
+            overflow-y: hidden; 
+            position: relative; 
+            transition: background-color 0.2s; 
         }
         .today-highlight { outline: 2px solid #6366F1 !important; outline-offset: -2px; z-index: 50; }
 
@@ -70,8 +78,22 @@
         .item-input-dynamic { border: none !important; background: transparent !important; width: 100% !important; font-size: 12px; font-weight: bold; padding: 0 !important; margin: 0 !important; resize: none !important; line-height: 1.4 !important; display: block; overflow: hidden; word-break: break-all; white-space: pre-wrap; height: auto; }
         .strikethrough-line { text-decoration: line-through !important; text-decoration-color: #475569 !important; text-decoration-thickness: 1.5px !important; color: #94a3b8 !important; }
         
-        .checkbox-container { height: 16.8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-        .compact-checkbox { width: 13px !important; height: 13px !important; accent-color: #4f46e5; cursor: pointer; margin: 0 !important; padding: 0 !important; vertical-align: middle; }
+        .checkbox-container {
+            height: 16.8px; 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .compact-checkbox { 
+            width: 13px !important; 
+            height: 13px !important; 
+            accent-color: #4f46e5; 
+            cursor: pointer; 
+            margin: 0 !important; 
+            padding: 0 !important;
+            vertical-align: middle;
+        }
         
         .popover-base { position: absolute; background: white !important; border: 1px solid #e2e8f0; border-radius: 1rem; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15); z-index: 9999; padding: 10px; animation: popFade 0.12s ease-out; }
         @keyframes popFade { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
@@ -79,12 +101,32 @@
         .widget-header { display: flex; align-items: center; justify-content: space-between; height: 1.5rem; margin-top: 2px; margin-bottom: 0px; padding: 0 0.25rem; }
         .dual-column-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 2px; }
         
-        .grid-item-container { background: transparent; border-radius: 0; padding: 0; display: flex; align-items: flex-start; gap: 6px; min-width: 0; cursor: grab; min-height: 16.8px; }
+        .grid-item-container { 
+            background: transparent; 
+            border-radius: 0; 
+            padding: 0; 
+            display: flex; 
+            align-items: flex-start; 
+            gap: 6px; 
+            min-width: 0; 
+            cursor: grab; 
+            overflow: visible !important; 
+            min-height: 16.8px; 
+        }
         
         .sync-indicator { font-size: 10px; font-weight: 900; color: #6366f1; display: flex; align-items: center; gap: 4px; background: rgba(99, 102, 241, 0.1); padding: 2px 8px; border-radius: 9999px; }
         .loading-spinner { border: 2px solid #f3f3f3; border-top: 2px solid #6366f1; border-radius: 50%; width: 10px; height: 10px; animation: spin 1s linear infinite; display: inline-block; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        .global-color-palette { position: absolute; display: flex; gap: 6px; background: white; padding: 6px 10px; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.25); border: 1px solid #e2e8f0; z-index: 99999; animation: popFade 0.1s ease-out; pointer-events: auto; }
+        .confirm-overlay { position: absolute; inset: 0; background: rgba(255, 255, 255, 0.98); z-index: 500; display: flex; flex-direction: column; align-items: center; justify-content: center; backdrop-filter: blur(2px); border-radius: 0.75rem; border: 2px solid #ef4444; }
+
+        .global-color-palette {
+            position: absolute; display: flex; gap: 6px;
+            background: white; padding: 6px 10px; border-radius: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.25); border: 1px solid #e2e8f0;
+            z-index: 99999; animation: popFade 0.1s ease-out;
+            pointer-events: auto;
+        }
 
         .water-calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; padding: 5px; }
         .water-day-cell { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 900; border-radius: 4px; border: 1px solid #f1f5f9; }
@@ -93,11 +135,6 @@
 
         .calendar-item-row { display: flex; align-items: flex-start; width: 100%; gap: 6px; min-height: 18.8px; position: relative; }
         .delete-btn-box { display: flex; align-items: center; justify-content: center; height: 16.8px; width: 18px; }
-
-        .budget-table { width: 100%; border-collapse: collapse; font-size: 11px; }
-        .budget-table th { text-align: left; color: #64748b; font-weight: 900; padding: 4px; border-bottom: 1px solid #f1f5f9; }
-        .budget-table td { padding: 5px 4px; border-bottom: 1px solid #f8fafc; font-weight: 700; color: #334155; }
-        .budget-amount { text-align: right; color: #6366f1; font-weight: 900; }
     </style>
 </head>
 <body>
@@ -108,7 +145,6 @@
 
         const GAS_URL = "https://script.google.com/macros/s/AKfycbzoCgmF_cfpNOaImXQ7yY0UPOZ5eDuH1whp7NKTdEAvjPWGO6y5GzvafqySyy3Oul1l/exec"; 
         const TARGET_SHEET = "교사용_바탕화면";
-        const BUDGET_SHEET = "교사용_예산";
 
         const PALETTE = [{ name: 'black', code: '#1E293B' }, { name: 'red', code: '#ef4444' }, { name: 'blue', code: '#3b82f6' }, { name: 'green', code: '#10b981' }, { name: 'purple', code: '#a855f7' }];
         const BG_PALETTE = [{ name: 'pink', code: '#FFF1F2' }, { name: 'sky', code: '#F0F9FF' }, { name: 'green', code: '#F0FDF4' }, { name: 'reset', code: '#FFFFFF', icon: 'rotate-ccw' }];
@@ -140,26 +176,70 @@
 
         const EditableItem = ({ id, value, completed, color, onChange, onDelete, className, hideCheckbox = false, showPalette = false, gapClass = "gap-1.5", onRequestPalette, activePaletteId, sectionInfo }) => {
             const textareaRef = useRef(null);
+            
             const getPalettePosition = () => {
                 if (!textareaRef.current) return { top: 0, left: 0 };
                 const rect = textareaRef.current.getBoundingClientRect();
                 const zoom = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--zoom-level')) || 1;
-                return { top: (rect.bottom / zoom) + 4, left: (rect.left / zoom) };
+                return { 
+                    top: (rect.bottom / zoom) + 4, 
+                    left: (rect.left / zoom) 
+                };
             };
+
             const adjustHeight = () => { 
                 if (textareaRef.current) { 
                     textareaRef.current.style.height = "auto"; 
                     textareaRef.current.style.height = textareaRef.current.scrollHeight + "px";
-                    if (showPalette && activePaletteId === id && onRequestPalette) onRequestPalette(id, getPalettePosition(), sectionInfo, true); 
+                    if (showPalette && activePaletteId === id && onRequestPalette) {
+                        onRequestPalette(id, getPalettePosition(), sectionInfo, true); 
+                    }
                 } 
             };
+
             useEffect(() => { adjustHeight(); }, [value]);
+
+            const handleTextareaMouseDown = (e) => {
+                e.stopPropagation();
+                if (textareaRef.current) textareaRef.current.focus();
+            };
+
+            const handleFocus = () => {
+                if (showPalette && !completed && onRequestPalette) {
+                    onRequestPalette(id, getPalettePosition(), sectionInfo);
+                }
+            };
+
             return (
                 <div className="flex flex-col w-full group/item relative mb-0.5">
                     <div className={`calendar-item-row relative ${gapClass}`}>
-                        {!hideCheckbox && <div className="checkbox-container"><input type="checkbox" checked={!!completed} onChange={(e) => onChange({completed: e.target.checked})} className="compact-checkbox" /></div>}
-                        <textarea ref={textareaRef} rows={1} onFocus={() => showPalette && !completed && onRequestPalette && onRequestPalette(id, getPalettePosition(), sectionInfo)} className={`${className} outline-none overflow-hidden resize-none flex-1 break-all ${completed ? 'strikethrough-line' : ''}`} style={{ color: completed ? '' : (color || '#1E293B'), fontSize: '12px', padding: '0' }} value={value} onChange={(e) => onChange({text: e.target.value})} onInput={adjustHeight} />
-                        <div className="delete-btn-box shrink-0"><button onClick={(e) => { e.stopPropagation(); onDelete(); }} className="text-slate-300 hover:text-red-500 opacity-0 group-hover/item:opacity-100 px-1 shrink-0 transition-opacity flex items-center justify-center h-full"><Icon name="x" size={11} /></button></div>
+                        {!hideCheckbox && (
+                            <div className="checkbox-container">
+                                <input 
+                                    type="checkbox" 
+                                    checked={!!completed} 
+                                    onChange={(e) => {
+                                        e.stopPropagation();
+                                        onChange({completed: e.target.checked});
+                                    }} 
+                                    className="compact-checkbox" 
+                                />
+                            </div>
+                        )}
+                        <textarea 
+                            ref={textareaRef} 
+                            rows={1} 
+                            onFocus={handleFocus}
+                            onMouseDown={handleTextareaMouseDown}
+                            className={`${className} outline-none overflow-hidden resize-none flex-1 break-all ${completed ? 'strikethrough-line' : ''}`} 
+                            style={{ color: completed ? '' : (color || '#1E293B'), fontSize: '12px', padding: '0' }} 
+                            value={value} 
+                            onChange={(e) => onChange({text: e.target.value})} 
+                            onInput={adjustHeight} 
+                        />
+                        <div className="delete-btn-box shrink-0">
+                            <button onClick={(e) => { e.stopPropagation(); onDelete(); }} className="text-slate-300 hover:text-red-500 opacity-0 group-hover/item:opacity-100 px-1 shrink-0 transition-opacity flex items-center justify-center h-full"><Icon name="x" size={11} /></button>
+                        </div>
                     </div>
                 </div>
             );
@@ -167,46 +247,60 @@
 
         function App() {
             useAutoZoom();
-            const [data, setData] = useState({ monthlyData: {}, routines: [], personalRoutines: [], waterTarget: 2000, waterHistory: {}, waterHistoryLogs: {}, generalMemo: '', schoolInfo: null, lastResetDate: "", budgetRaw: "" });
-            const [now, setNow] = useState(new Date());
-            useEffect(() => { const timer = setInterval(() => setNow(new Date()), 30000); return () => clearInterval(timer); }, []);
-            const todayStr = useMemo(() => getLocalDateString(now), [now]);
+            const [data, setData] = useState({ 
+                monthlyData: {}, routines: [], personalRoutines: [], waterTarget: 2000, 
+                waterHistory: {}, waterHistoryLogs: {}, generalMemo: '', budgetMemo: '', schoolInfo: null,
+                lastResetDate: "" 
+            });
             
+            const [now, setNow] = useState(new Date());
+            useEffect(() => {
+                const timer = setInterval(() => setNow(new Date()), 30000);
+                return () => clearInterval(timer);
+            }, []);
+
+            const todayStr = useMemo(() => getLocalDateString(now), [now]);
+
             const [viewDate, setViewDate] = useState(new Date()); 
+            const [waterViewDate, setWaterViewDate] = useState(new Date());
             const [isInitialLoading, setIsInitialLoading] = useState(true);
             const [isSyncing, setIsSyncing] = useState(false);
             const [isMonthPickerOpen, setIsMonthPickerOpen] = useState(false);
             const [isGoalEditPopOpen, setIsGoalEditPopOpen] = useState(false);
             const [isAddWaterPopOpen, setIsAddWaterPopOpen] = useState(false);
+            const [isWaterHistoryOpen, setIsWaterHistoryOpen] = useState(false);
+            const [isSchoolSearchMode, setIsSchoolSearchMode] = useState(false);
+            const [schoolSearchTerm, setSchoolSearchTerm] = useState('');
+            const [schoolSearchResults, setSchoolSearchResults] = useState([]);
             const [mealData, setMealData] = useState([]);
             const [isMealLoading, setIsMealLoading] = useState(false);
+            const [confirmClear, setConfirmClear] = useState(null);
             const [tempGoalVal, setTempGoalVal] = useState('');
             const [customWaterVal, setCustomWaterVal] = useState('');
+
             const [activePalette, setActivePalette] = useState(null); 
-            const monthPopRef = useRef(null); goalPopRef = useRef(null); addPopRef = useRef(null); paletteRef = useRef(null); dragItem = useRef(null); dragOverItem = useRef(null);
-            
+
+            const monthPopRef = useRef(null);
+            const goalPopRef = useRef(null);
+            const addPopRef = useRef(null);
+            const waterPopRef = useRef(null);
+            const paletteRef = useRef(null);
+
+            const waterIntake = data.waterHistory[todayStr] || 0;
+            const waterLogs = data.waterHistoryLogs[todayStr] || [];
+
             const updateData = (updates) => setData(prev => ({ ...prev, ...updates }));
 
             const loadFromCloud = useCallback(async () => {
                 if (!GAS_URL) return;
                 setIsSyncing(true);
                 try {
-                    // 메인 데이터 로딩
                     const res = await fetch(`${GAS_URL}?sheet=${encodeURIComponent(TARGET_SHEET)}`);
                     const cloudData = await res.json();
-                    
-                    // 예산 데이터 로딩 (별도의 Try-Catch로 보호)
-                    let bRaw = "";
-                    try {
-                        const bRes = await fetch(`${GAS_URL}?sheet=${encodeURIComponent(BUDGET_SHEET)}`);
-                        const bData = await bRes.json();
-                        bRaw = typeof bData === 'string' ? bData : (bData?.value || "");
-                    } catch(e) { console.error("Budget data error", e); }
-
-                    if (cloudData) {
-                        setData(prev => ({...prev, ...cloudData, budgetRaw: bRaw || prev.budgetRaw}));
+                    if (cloudData && typeof cloudData === 'object' && Object.keys(cloudData).length > 0) {
+                        setData(prev => ({...prev, ...cloudData}));
                     }
-                } catch (e) { console.error("Main data error", e); } finally { 
+                } catch (e) { console.error("Cloud load error", e); } finally { 
                     setIsInitialLoading(false); setIsSyncing(false); 
                 }
             }, []);
@@ -215,65 +309,30 @@
                 if (isInitialLoading || !GAS_URL) return;
                 setIsSyncing(true);
                 try {
-                    const { budgetRaw, ...mainData } = currentData;
-                    await fetch(`${GAS_URL}?sheet=${encodeURIComponent(TARGET_SHEET)}`, { method: 'POST', mode: 'no-cors', body: JSON.stringify(mainData) });
-                } catch (e) {} finally { setTimeout(() => setIsSyncing(false), 800); }
+                    await fetch(`${GAS_URL}?sheet=${encodeURIComponent(TARGET_SHEET)}`, { 
+                        method: 'POST', mode: 'no-cors', body: JSON.stringify(currentData) 
+                    });
+                } catch (e) { console.error("Cloud save error", e); } finally { setTimeout(() => setIsSyncing(false), 800); }
             }, [isInitialLoading]);
 
             useEffect(() => { loadFromCloud(); }, [loadFromCloud]);
             
-            // 0시 자동 리셋
             useEffect(() => {
                 if (isInitialLoading) return;
                 if (data.lastResetDate !== todayStr) {
                     const resetRoutines = data.personalRoutines.map(r => ({ ...r, completed: false }));
-                    setData(prev => ({ ...prev, personalRoutines: resetRoutines, lastResetDate: todayStr }));
+                    setData(prev => ({
+                        ...prev,
+                        personalRoutines: resetRoutines,
+                        lastResetDate: todayStr
+                    }));
                 }
-            }, [isInitialLoading, todayStr]);
+            }, [isInitialLoading, todayStr, data.lastResetDate]);
 
-            useEffect(() => { const timer = setTimeout(() => { saveToCloud(data); }, 1500); return () => clearTimeout(timer); }, [data, saveToCloud]);
-
-            // 예산 데이터 계산
-            const parsedBudgets = useMemo(() => {
-                if (!data.budgetRaw) return [];
-                try {
-                    const parsed = JSON.parse(data.budgetRaw);
-                    const budgets = parsed.budgets || [];
-                    const transactions = parsed.transactions || [];
-                    return budgets.map(b => {
-                        const spent = transactions.filter(t => t.budgetId === b.id).reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
-                        return { name: b.name, balance: b.plannedAmount - spent };
-                    });
-                } catch (e) { return []; }
-            }, [data.budgetRaw]);
-
-            const handleDragEnd = () => {
-                if (dragItem.current === null || dragOverItem.current === null) return;
-                const copyListItems = [...data.personalRoutines];
-                const dragItemContent = copyListItems[dragItem.current];
-                copyListItems.splice(dragItem.current, 1);
-                copyListItems.splice(dragOverItem.current, 0, dragItemContent);
-                dragItem.current = null; dragOverItem.current = null;
-                updateData({ personalRoutines: copyListItems });
-            };
-
-            const addWater = (amount) => {
-                const cur = data.waterHistory[todayStr] || 0;
-                const logs = data.waterHistoryLogs[todayStr] || [];
-                updateData({ waterHistory: { ...data.waterHistory, [todayStr]: cur + amount }, waterHistoryLogs: { ...data.waterHistoryLogs, [todayStr]: [...logs, amount] } });
-            };
-
-            const handleGlobalColorSelect = (colorCode) => {
-                if (!activePalette) return;
-                const { type, dateStr } = activePalette.sectionInfo;
-                const id = activePalette.id;
-                if (type === 'monthlyData') {
-                    const dayData = data.monthlyData[dateStr];
-                    const ni = dayData.items.map(it => it.id === id ? { ...it, color: colorCode } : it);
-                    updateData({ monthlyData: { ...data.monthlyData, [dateStr]: { ...dayData, items: ni } } });
-                }
-                setActivePalette(null);
-            };
+            useEffect(() => {
+                const timer = setTimeout(() => { saveToCloud(data); }, 1500);
+                return () => clearTimeout(timer);
+            }, [data, saveToCloud]);
 
             useEffect(() => {
                 if (!data.schoolInfo) { setMealData([]); return; }
@@ -297,134 +356,289 @@
                 const adj = new Date(y, m, 1).getDay() === 0 ? 6 : new Date(y, m, 1).getDay() - 1;
                 const days = [];
                 for (let i = 0; i < adj; i++) days.push(null);
-                const lastDate = new Date(y, m + 1, 0).getDate();
-                for (let d = 1; d <= lastDate; d++) days.push(new Date(y, m, d));
+                for (let d = 1; d <= new Date(y, m + 1, 0).getDate(); d++) days.push(new Date(y, m, d));
                 while (days.length % 7 !== 0) days.push(null);
                 return days;
             }, [viewDate]);
 
+            const waterCalendarDays = useMemo(() => {
+                const y = waterViewDate.getFullYear(), m = waterViewDate.getMonth();
+                const lastDate = new Date(y, m + 1, 0).getDate();
+                const days = [];
+                for (let d = 1; d <= lastDate; d++) days.push(new Date(y, m, d));
+                return days;
+            }, [waterViewDate]);
+
+            const executeClear = () => {
+                if (confirmClear === 'routine') updateData({ personalRoutines: [] });
+                if (confirmClear === 'checklist') updateData({ routines: [] });
+                if (confirmClear === 'memo') updateData({ generalMemo: '' });
+                if (confirmClear === 'budget') updateData({ budgetMemo: '' });
+                setConfirmClear(null);
+            };
+
+            const addWater = (amount) => {
+                const newIntake = (waterIntake || 0) + amount;
+                const newLogs = [...waterLogs, amount];
+                updateData({ waterHistory: { ...data.waterHistory, [todayStr]: newIntake }, waterHistoryLogs: { ...data.waterHistoryLogs, [todayStr]: newLogs } });
+            };
+
+            const undoWater = () => {
+                if (waterLogs.length === 0) return;
+                const lastAmount = waterLogs[waterLogs.length - 1];
+                const newIntake = Math.max(0, (waterIntake || 0) - lastAmount);
+                const newLogs = waterLogs.slice(0, -1);
+                updateData({ waterHistory: { ...data.waterHistory, [todayStr]: newIntake }, waterHistoryLogs: { ...data.waterHistoryLogs, [todayStr]: newLogs } });
+            };
+
+            const dragItem = useRef(null); const dragOverItem = useRef(null);
+            const handleDragStart = (idx) => { dragItem.current = idx; };
+            const handleDragEnter = (idx) => { dragOverItem.current = idx; };
+            const handleDragEnd = () => {
+                const copyListItems = [...data.personalRoutines];
+                const dragItemContent = copyListItems[dragItem.current];
+                copyListItems.splice(dragItem.current, 1); copyListItems.splice(dragOverItem.current, 0, dragItemContent);
+                dragItem.current = null; dragOverItem.current = null;
+                updateData({ personalRoutines: copyListItems });
+            };
+
+            useEffect(() => {
+                const handleClickOutside = (e) => {
+                    if (isMonthPickerOpen && monthPopRef.current && !monthPopRef.current.contains(e.target)) setIsMonthPickerOpen(false);
+                    if (isGoalEditPopOpen && goalPopRef.current && !goalPopRef.current.contains(e.target)) setIsGoalEditPopOpen(false);
+                    if (isAddWaterPopOpen && addPopRef.current && !addPopRef.current.contains(e.target)) setIsAddWaterPopOpen(false);
+                    if (isWaterHistoryOpen && waterPopRef.current && !waterPopRef.current.contains(e.target)) setIsWaterHistoryOpen(false);
+                    if (activePalette && paletteRef.current && !paletteRef.current.contains(e.target)) {
+                        if (!e.target.closest('textarea')) setActivePalette(null);
+                    }
+                };
+                document.addEventListener('mousedown', handleClickOutside);
+                return () => document.removeEventListener('mousedown', handleClickOutside);
+            }, [isMonthPickerOpen, isGoalEditPopOpen, isAddWaterPopOpen, isWaterHistoryOpen, activePalette]);
+
+            const handleRequestPalette = (id, pos, sectionInfo, isRefresh = false) => {
+                if (isRefresh) {
+                    setActivePalette(prev => prev && prev.id === id ? { ...prev, pos } : prev);
+                } else {
+                    setActivePalette({ id, pos, sectionInfo });
+                }
+            };
+
+            const handleGlobalColorSelect = (colorCode) => {
+                if (!activePalette) return;
+                const { type, dateStr } = activePalette.sectionInfo;
+                const id = activePalette.id;
+
+                if (type === 'monthlyData') {
+                    const dayData = data.monthlyData[dateStr];
+                    const newItems = dayData.items.map(it => it.id === id ? { ...it, color: colorCode } : it);
+                    updateData({ monthlyData: { ...data.monthlyData, [dateStr]: { ...dayData, items: newItems } } });
+                } else if (type === 'routines') {
+                    const ni = data.routines.map(it => it.id === id ? { ...it, color: colorCode } : it);
+                    updateData({ routines: ni });
+                } else if (type === 'personalRoutines') {
+                    const ni = data.personalRoutines.map(it => it.id === id ? { ...it, color: colorCode } : it);
+                    updateData({ personalRoutines: ni });
+                }
+                setActivePalette(null);
+            };
+
             return (
-                <div id="dashboard-root" className="dashboard-container">
-                    <section className="calendar-section">
-                        <div className="glass-card h-full">
-                            <header className="flex items-center justify-between h-10 px-4 shrink-0">
-                                <div className="flex items-center gap-2 relative flex-1 min-w-0">
-                                    <button onClick={() => setIsMonthPickerOpen(!isMonthPickerOpen)} className="w-5 h-5 bg-indigo-100 text-indigo-600 rounded flex items-center justify-center hover:bg-indigo-200"><Icon name="calendar-days" size={14} /></button>
-                                    {isMonthPickerOpen && <div ref={monthPopRef} className="popover-base top-full left-0 mt-2"><div className="grid grid-cols-4 gap-1">{Array.from({length:12}, (_,i)=>i+1).map(m => (<button key={m} onClick={() => { setViewDate(new Date(viewDate.getFullYear(), m-1, 1)); setIsMonthPickerOpen(false); }} className={`px-2 py-1 text-[10px] font-black rounded ${viewDate.getMonth()+1 === m ? 'bg-indigo-600 text-white' : 'bg-slate-50'}`}>{m}월</button>))}</div></div>}
-                                    <h2 className="font-black text-[15px] text-slate-800 tracking-tight truncate">{viewDate.getFullYear()}년 {viewDate.getMonth()+1}월 월별 계획</h2>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                    {isSyncing && <div className="sync-indicator"><div className="loading-spinner"></div><span>동기화 중...</span></div>}
-                                    <div className="flex items-center gap-1 bg-slate-100/50 p-0.5 rounded shrink-0 relative">
-                                        <button onClick={() => setViewDate(new Date())} className="px-2 py-0.5 text-[12px] font-black bg-white text-slate-600 rounded shadow-sm h-[24px] hover:text-indigo-600 transition-colors">오늘</button>
-                                        <button onClick={()=>setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth()-1, 1))} className="p-1 hover:bg-white rounded text-slate-400 h-[24px] flex items-center"><Icon name="chevron-left" size={16} /></button>
-                                        <button onClick={()=>setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth()+1, 1))} className="p-1 hover:bg-white rounded text-slate-400 h-[24px] flex items-center"><Icon name="chevron-right" size={16} /></button>
+                <div id="root">
+                    <div className="dashboard-container">
+                        <section className="calendar-section">
+                            <div className="glass-card h-full">
+                                <header className="flex items-center justify-between h-10 px-4 shrink-0">
+                                    <div className="flex items-center gap-2 relative flex-1 min-w-0">
+                                        <button onClick={() => setIsMonthPickerOpen(!isMonthPickerOpen)} className="w-5 h-5 bg-indigo-100 text-indigo-600 rounded flex items-center justify-center hover:bg-indigo-200"><Icon name="calendar-days" size={14} /></button>
+                                        {isMonthPickerOpen && (
+                                            <div ref={monthPopRef} className="popover-base top-full left-0 mt-2">
+                                                <div className="grid grid-cols-4 gap-1">
+                                                    {Array.from({length:12}, (_,i)=>i+1).map(m => (
+                                                        <button key={m} onClick={() => { setViewDate(new Date(viewDate.getFullYear(), m-1, 1)); setIsMonthPickerOpen(false); }} className={`px-2 py-1 text-[10px] font-black rounded ${viewDate.getMonth()+1 === m ? 'bg-indigo-600 text-white' : 'bg-slate-50'}`}>{m}월</button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                        <h2 className="font-black text-[15px] text-slate-800 tracking-tight truncate">{viewDate.getFullYear()}년 {viewDate.getMonth()+1}월 월별 계획</h2>
                                     </div>
-                                </div>
-                            </header>
-                            <div className="calendar-grid-parent" style={{ gridTemplateRows: `24px repeat(${Math.ceil(calendarDays.length/7)}, 1fr)` }}>
-                                {['월','화','수','목','금','토','일'].map((d,i)=>(<div key={d} className={`header-cell ${i===6?'text-red-400':i===5?'text-indigo-400':'text-slate-400'}`}>{d}</div>))}
-                                {calendarDays.map((date, i) => {
-                                    if (!date) return <div key={`empty-${i}`} className="table-cell bg-white"></div>;
-                                    const dStr = getLocalDateString(date);
-                                    const isT = dStr === todayStr; 
-                                    const dayData = data.monthlyData[dStr] || { holiday:'', items:[], bgColor: '#FFFFFF' };
-                                    const holidayTextColor = dayData.bgColor === '#FFF1F2' ? '#ef4444' : '#2563eb';
-                                    return (
-                                        <div key={dStr} className={`table-cell group ${isT ? 'today-highlight' : ''}`} style={{ backgroundColor: dayData.bgColor }}>
-                                            <div className="flex items-start mb-0.5 px-0 shrink-0 h-[20px] overflow-visible">
-                                                <div className="flex items-center gap-1 flex-1 min-w-0 h-[20px]"><span className={`text-[12px] font-black h-[20px] leading-[20px] shrink-0 ${date.getDay()===0?'text-red-500':date.getDay()===6?'text-indigo-500':'text-slate-400'}`}>{date.getDate()}</span><input type="text" value={dayData.holiday || ''} onChange={(e) => updateData({monthlyData: {...data.monthlyData, [dStr]: {...dayData, holiday: e.target.value}}})} className="bg-transparent border-none text-[11px] font-black outline-none w-full h-[20px] leading-[20px]" style={{ verticalAlign: 'middle', color: holidayTextColor }} /></div>
-                                                <button onClick={()=>{ const cur = data.monthlyData[dStr] || { items: [] }; updateData({monthlyData: {...data.monthlyData, [dStr]: {...cur, items: [...cur.items, {id:Date.now(), text:'', completed:false, color:'#1E293B'}]}}}); }} className="opacity-0 group-hover:opacity-100 p-0.5 bg-indigo-600 text-white rounded mt-[2px] shrink-0"><Icon name="plus" size={8} /></button>
-                                            </div>
-                                            <div className="flex-grow overflow-y-auto custom-scrollbar px-0 space-y-0.5 selectable-text" style={{ overflowX: 'hidden' }}>
-                                                {dayData.items.map(item => (
-                                                    <EditableItem key={item.id} id={item.id} className="item-input-dynamic" value={item.text} completed={item.completed} color={item.color} showPalette={true} gapClass="gap-1.5" activePaletteId={activePalette?.id} sectionInfo={{ type: 'monthlyData', dateStr: dStr }} onRequestPalette={(id, pos, sInfo, isRef) => isRef ? setActivePalette(prev => prev && prev.id === id ? { ...prev, pos } : prev) : setActivePalette({ id, pos, sectionInfo: sInfo })} onChange={(updates) => { const ni = dayData.items.map(it => it.id === item.id ? { ...it, ...updates } : it); updateData({ monthlyData: { ...data.monthlyData, [dStr]: { ...dayData, items: ni } } }); }} onDelete={() => { const ni = dayData.items.filter(it => it.id !== item.id); updateData({ monthlyData: { ...data.monthlyData, [dStr]: { ...dayData, items: ni } } }); }} />
-                                                ))}
-                                            </div>
-                                            <div className="absolute bottom-1 right-1 opacity-0 group-hover:opacity-100 flex gap-1 bg-white/80 p-1 rounded-lg shadow-sm transition-opacity z-20">
-                                                {BG_PALETTE.map(p => (<button key={p.name} className="w-3.5 h-3.5 rounded-full border border-slate-200 flex items-center justify-center hover:scale-125 transition-transform" style={{ backgroundColor: p.code }} onClick={() => updateData({monthlyData: {...data.monthlyData, [dStr]: {...dayData, bgColor: p.code}}})}>{p.icon && <Icon name={p.icon} size={8} className="text-slate-400" />}</button>))}
-                                            </div>
+                                    <div className="flex items-center gap-2">
+                                        {isSyncing && <div className="sync-indicator"><div className="loading-spinner"></div><span>동기화 중...</span></div>}
+                                        <div className="flex items-center gap-1 bg-slate-100/50 p-0.5 rounded shrink-0 relative">
+                                            <button onClick={() => setViewDate(new Date())} className="px-2 py-0.5 text-[12px] font-black bg-white text-slate-600 rounded shadow-sm h-[24px] hover:text-indigo-600 transition-colors">오늘</button>
+                                            <button onClick={()=>setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth()-1, 1))} className="p-1 hover:bg-white rounded text-slate-400 h-[24px] flex items-center"><Icon name="chevron-left" size={16} /></button>
+                                            <button onClick={()=>setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth()+1, 1))} className="p-1 hover:bg-white rounded text-slate-400 h-[24px] flex items-center"><Icon name="chevron-right" size={16} /></button>
                                         </div>
-                                    );
-                                })}
+                                    </div>
+                                </header>
+                                <div className="calendar-grid-parent" style={{ gridTemplateRows: `24px repeat(${Math.ceil(calendarDays.length/7)}, 1fr)` }}>
+                                    {['월','화','수','목','금','토','일'].map((d,i)=>(<div key={d} className={`header-cell ${i===6?'text-red-400':i===5?'text-indigo-400':'text-slate-400'}`}>{d}</div>))}
+                                    {calendarDays.map((date, i) => {
+                                        if (!date) return <div key={`empty-${i}`} className="table-cell bg-white"></div>;
+                                        const dStr = getLocalDateString(date);
+                                        const isT = dStr === todayStr; 
+                                        const dayData = data.monthlyData[dStr] || { holiday:'', items:[], bgColor: '#FFFFFF' };
+                                        return (
+                                            <div key={dStr} className={`table-cell group ${isT ? 'today-highlight' : ''}`} style={{ backgroundColor: dayData.bgColor }}>
+                                                <div className="flex items-start mb-0.5 px-0 shrink-0 h-[20px] overflow-visible">
+                                                    <div className="flex items-center gap-1 flex-1 min-w-0 h-[20px]">
+                                                        <span className={`text-[12px] font-black h-[20px] leading-[20px] shrink-0 ${date.getDay()===0?'text-red-500':date.getDay()===6?'text-indigo-500':'text-slate-400'}`}>{date.getDate()}</span>
+                                                        <input type="text" value={dayData.holiday || ''} onChange={(e) => updateData({monthlyData: {...data.monthlyData, [dStr]: {...dayData, holiday: e.target.value}}})} className="bg-transparent border-none text-[11px] font-black text-blue-600 outline-none w-full h-[20px] leading-[20px]" />
+                                                    </div>
+                                                    <button onClick={()=>{ const cur = data.monthlyData[dStr] || { items: [] }; updateData({monthlyData: {...data.monthlyData, [dStr]: {...cur, items: [...cur.items, {id:Date.now(), text:'', completed:false, color:'#1E293B'}]}}}); }} className="opacity-0 group-hover:opacity-100 p-0.5 bg-indigo-600 text-white rounded transition-all h-[16px] flex items-center mt-[2px] shrink-0"><Icon name="plus" size={8} /></button>
+                                                </div>
+                                                <div className="flex-grow overflow-y-auto custom-scrollbar px-0 space-y-0.5 selectable-text" style={{ overflowX: 'hidden' }}>
+                                                    {dayData.items.map(item => (
+                                                        <EditableItem key={item.id} id={item.id} className="item-input-dynamic" value={item.text} completed={item.completed} color={item.color} showPalette={true} gapClass="gap-1.5"
+                                                            activePaletteId={activePalette?.id}
+                                                            sectionInfo={{ type: 'monthlyData', dateStr: dStr }}
+                                                            onRequestPalette={handleRequestPalette}
+                                                            onChange={(updates) => { const ni = dayData.items.map(it => it.id === item.id ? { ...it, ...updates } : it); updateData({ monthlyData: { ...data.monthlyData, [dStr]: { ...dayData, items: ni } } }); }} 
+                                                            onDelete={() => { const ni = dayData.items.filter(it => it.id !== item.id); updateData({ monthlyData: { ...data.monthlyData, [dStr]: { ...dayData, items: ni } } }); }} />
+                                                    ))}
+                                                </div>
+                                                <div className="absolute bottom-1 right-1 opacity-0 group-hover:opacity-100 flex gap-1 bg-white/80 p-1 rounded-lg shadow-sm transition-opacity z-20">
+                                                    {BG_PALETTE.map(p => (
+                                                        <button key={p.name} className="w-3.5 h-3.5 rounded-full border border-slate-200 flex items-center justify-center hover:scale-125 transition-transform" style={{ backgroundColor: p.code }} onClick={() => updateData({monthlyData: {...data.monthlyData, [dStr]: {...dayData, bgColor: p.code}}})}>
+                                                            {p.icon && <Icon name={p.icon} size={8} className="text-slate-400" />}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
                             </div>
-                        </div>
-                    </section>
+                        </section>
 
-                    <div className="remainder-section">
-                        <div className="flex-[0.7] flex gap-[0.5rem] min-w-0">
-                            <section className="glass-card flex-shrink-0 overflow-visible z-[20] h-[125px]" style={{ width: '210px' }}>
-                                <header className="widget-header"><div className="flex items-center gap-1.5"><Icon name="droplets" className="text-blue-600" size={12} /><h2 className="font-black text-[14px]">수분 섭취</h2></div><button className="p-1 text-slate-300 hover:text-blue-600"><Icon name="calendar" size={12} /></button></header>
-                                <div className="flex flex-col h-full px-1 pb-[4px] justify-start gap-1">
-                                    <div className="flex flex-col items-center">
-                                        <div className="relative">
-                                            <button onClick={() => { setTempGoalVal(''); setIsGoalEditPopOpen(!isGoalEditPopOpen); }} className="text-[9px] font-black text-slate-400 bg-white px-2 py-0.5 rounded-full border border-slate-100">Goal: {data.waterTarget}ml</button>
-                                            {isGoalEditPopOpen && <div ref={goalPopRef} className="absolute bottom-full left-[25px] mb-2 z-[100]"><div className="popover-base flex items-stretch gap-1 min-w-[100px]"><input autoFocus type="number" value={tempGoalVal} onChange={e=>setTempGoalVal(e.target.value)} className="w-16 h-6 text-[10px] font-black border rounded px-1 outline-none" /><button onClick={()=>{ updateData({waterTarget: parseInt(tempGoalVal)||data.waterTarget}); setIsGoalEditPopOpen(false); }} className="bg-indigo-600 text-white text-[10px] font-black w-6 h-6 flex items-center justify-center rounded shadow-sm">+</button></div></div>}
+                        <div className="remainder-section">
+                            {/* 첫 번째 줄: 수분 섭취(190) | 개인 루틴(270) | 오늘의 급식(260) | 체크리스트(296) */}
+                            <div className="flex gap-[0.5rem] w-full items-stretch">
+                                <section className="glass-card flex-shrink-0 overflow-visible z-[20] h-[125px]" style={{ width: '190px' }}>
+                                    <header className="widget-header">
+                                        <div className="flex items-center gap-1.5"><Icon name="droplets" className="text-blue-600" size={12} /><h2 className="font-black text-[14px]">수분 섭취</h2></div>
+                                        <button onClick={() => setIsWaterHistoryOpen(!isWaterHistoryOpen)} className="p-1 text-slate-300 hover:text-blue-600 transition-colors"><Icon name="calendar" size={12} /></button>
+                                        {isWaterHistoryOpen && (
+                                            <div ref={waterPopRef} className="popover-base left-[calc(100%+10px)] top-0 mt-0 min-w-[190px] z-[99999]">
+                                                <div className="flex items-center justify-between px-2 border-b pb-1 mb-2">
+                                                    <button onClick={(e) => {e.stopPropagation(); setWaterViewDate(new Date(waterViewDate.getFullYear(), waterViewDate.getMonth()-1, 1))}} className="text-slate-400 hover:text-blue-600"><Icon name="chevron-left" size={12}/></button>
+                                                    <h3 className="text-[10px] font-black text-slate-800">{waterViewDate.getFullYear()}년 {waterViewDate.getMonth()+1}월</h3>
+                                                    <button onClick={(e) => {e.stopPropagation(); setWaterViewDate(new Date(waterViewDate.getFullYear(), waterViewDate.getMonth()+1, 1))}} className="text-slate-400 hover:text-blue-600"><Icon name="chevron-right" size={12}/></button>
+                                                </div>
+                                                <div className="water-calendar-grid custom-scrollbar max-h-[150px] overflow-y-auto">
+                                                    {waterCalendarDays.map(date => {
+                                                        const dStr = getLocalDateString(date);
+                                                        const intake = data.waterHistory[dStr] || 0; const met = intake >= data.waterTarget;
+                                                        return <div key={dStr} className={`water-day-cell ${met ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-400'}`}>{date.getDate()}</div>;
+                                                    })}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </header>
+                                    <div className="flex flex-col h-full px-1 pb-[4px] justify-start gap-1"> 
+                                        <div className="flex flex-col items-center">
+                                            <div className="relative">
+                                                <button onClick={() => { setTempGoalVal(''); setIsGoalEditPopOpen(!isGoalEditPopOpen); }} className="text-[9px] font-black text-slate-400 bg-white px-2 py-0.5 rounded-full border border-slate-100">Goal: {data.waterTarget}ml</button>
+                                                {isGoalEditPopOpen && <div ref={goalPopRef} className="absolute bottom-full left-[15px] mb-2 z-[100]"><div className="popover-base flex items-stretch gap-1 min-w-[100px]"><input autoFocus type="number" value={tempGoalVal} onChange={e=>setTempGoalVal(e.target.value)} className="w-16 h-6 text-[10px] font-black border rounded px-1 outline-none" /><button onClick={()=>{ updateData({waterTarget: parseInt(tempGoalVal)||data.waterTarget}); setIsGoalEditPopOpen(false); }} className="bg-indigo-600 text-white text-[10px] font-black w-6 h-6 flex items-center justify-center rounded shadow-sm">+</button></div></div>}
+                                            </div>
+                                            <div className="text-[18px] font-black text-blue-600 leading-none mt-0.5">{waterIntake} ml</div>
                                         </div>
-                                        <div className="text-[18px] font-black text-blue-600 leading-none mt-0.5">{data.waterHistory[todayStr] || 0} ml</div>
-                                    </div>
-                                    <div className="w-full px-3 my-0.5"><div className="w-full water-bar-custom bg-blue-50 rounded-full border border-blue-100 overflow-hidden"><div className="h-full bg-gradient-to-r from-blue-400 to-blue-600 transition-all duration-700" style={{ width: `${Math.min(((data.waterHistory[todayStr]||0)/data.waterTarget)*100, 100)}%` }}></div></div></div>
-                                    <div className="flex gap-1 w-full mt-1">
-                                        <button onClick={()=>addWater(250)} className="flex-1 bg-blue-50 text-blue-600 h-6 rounded text-[10px] font-black hover:bg-blue-100">+250</button>
-                                        <button onClick={()=>addWater(500)} className="flex-1 bg-blue-600 text-white h-6 rounded text-[10px] font-black hover:bg-blue-700">+500</button>
-                                        <div className="flex-none relative">
-                                            <button onClick={() => { setCustomWaterVal(''); setIsAddWaterPopOpen(!isAddWaterPopOpen); }} className="w-6 h-6 bg-slate-100 rounded text-[10px] font-black flex items-center justify-center hover:bg-slate-200">+</button>
-                                            {isAddWaterPopOpen && <div ref={addPopRef} className="absolute bottom-full right-0 mb-1 z-[100]"><div className="popover-base flex items-stretch gap-1 min-w-[100px]"><input autoFocus type="number" value={customWaterVal} onChange={e=>setCustomWaterVal(e.target.value)} className="w-14 h-6 text-[10px] font-black border rounded px-1 outline-none" placeholder="ml" /><button onClick={()=>{const am=parseInt(customWaterVal);if(!isNaN(am)){addWater(am);}setIsAddWaterPopOpen(false);}} className="bg-indigo-600 text-white text-[10px] font-black w-6 h-6 flex items-center justify-center rounded shadow-sm">+</button></div></div>}
+                                        <div className="w-full px-3 my-0.5">
+                                            <div className="w-full water-bar-custom bg-blue-50 rounded-full border border-blue-100 overflow-hidden">
+                                                <div className="h-full bg-gradient-to-r from-blue-400 to-blue-600 transition-all duration-700" style={{ width: `${Math.min((waterIntake/data.waterTarget)*100, 100)}%` }}></div>
+                                            </div>
                                         </div>
-                                        <button onClick={()=>{ const logs = data.waterHistoryLogs[todayStr] || []; if(logs.length > 0) { const last = logs[logs.length - 1]; updateData({ waterHistory: { ...data.waterHistory, [todayStr]: Math.max(0, (data.waterHistory[todayStr]||0) - last) }, waterHistoryLogs: { ...data.waterHistoryLogs, [todayStr]: logs.slice(0, -1) } }); }}} className="flex-none w-6 h-6 bg-orange-50 text-orange-600 rounded flex items-center justify-center"><Icon name="rotate-ccw" size={12} /></button>
+                                        <div className="flex gap-1 w-full mt-1">
+                                            <button onClick={()=>addWater(250)} className="flex-1 bg-blue-50 text-blue-600 h-6 rounded text-[10px] font-black hover:bg-blue-100">+250</button>
+                                            <button onClick={()=>addWater(500)} className="flex-1 bg-blue-600 text-white h-6 rounded text-[10px] font-black shadow-sm hover:bg-blue-700">+500</button>
+                                            <div className="flex-1 relative">
+                                                <button onClick={() => { setCustomWaterVal(''); setIsAddWaterPopOpen(!isAddWaterPopOpen); }} className="w-full h-6 bg-slate-100 text-slate-600 rounded text-[10px] font-black flex items-center justify-center hover:bg-slate-200">+</button>
+                                                {isAddWaterPopOpen && <div ref={addPopRef} className="absolute bottom-full right-0 mb-1 z-[100]"><div className="popover-base flex items-stretch gap-1 min-w-[100px]"><input autoFocus type="number" value={customWaterVal} onChange={e=>setCustomWaterVal(e.target.value)} className="w-14 h-6 text-[10px] font-black border rounded px-1 outline-none" placeholder="ml" /><button onClick={()=>{const am=parseInt(customWaterVal);if(!isNaN(am)){addWater(am);}setIsAddWaterPopOpen(false);}} className="bg-indigo-600 text-white text-[10px] font-black w-6 h-6 flex items-center justify-center rounded shadow-sm">+</button></div></div>}
+                                            </div>
+                                            <button onClick={undoWater} disabled={waterLogs.length === 0} className={`flex-none w-6 h-6 rounded flex items-center justify-center transition-all ${waterLogs.length === 0 ? 'bg-slate-50 text-slate-200 cursor-not-allowed' : 'bg-orange-50 text-orange-600 hover:bg-orange-100 active:scale-95'}`}><Icon name="rotate-ccw" size={12} /></button>
+                                        </div>
                                     </div>
-                                </div>
-                            </section>
+                                </section>
 
-                            <section className="glass-card flex-1 overflow-hidden h-[125px]">
-                                <header className="widget-header"><div className="flex items-center gap-1.5"><Icon name="list-checks" className="text-indigo-600" size={12} /><h2 className="font-black text-[14px]">개인 루틴</h2></div><div className="flex gap-1"><button onClick={()=>updateData({personalRoutines: [...data.personalRoutines, {id:Date.now(), text:'', completed:false}]})} className="p-0.5 bg-indigo-600 text-white rounded hover:scale-110 transition-transform"><Icon name="plus" size={12} /></button></div></header>
-                                <div className="flex-grow overflow-y-auto custom-scrollbar px-1 py-1">
-                                    <div className="dual-column-grid">
-                                        {data.personalRoutines.map((r, idx) => (
-                                            <div key={r.id} draggable onDragStart={() => dragItem.current=idx} onDragEnter={() => dragOverItem.current=idx} onDragEnd={handleDragEnd} onDragOver={(e) => e.preventDefault()} className="grid-item-container group relative">
-                                                <EditableItem id={r.id} className="item-input-dynamic flex-1" value={r.text} completed={r.completed} color={r.color} showPalette={false} gapClass="gap-[6px]" onChange={(updates) => updateData({ personalRoutines: data.personalRoutines.map(it => it.id === r.id ? { ...it, ...updates } : it) })} onDelete={() => updateData({ personalRoutines: data.personalRoutines.filter(it => it.id !== r.id) })} />
+                                {/* 개인 루틴: 270px로 축소 */}
+                                <section className="glass-card flex-shrink-0 overflow-hidden h-[125px]" style={{ width: '270px' }}>
+                                    {confirmClear === 'routine' && <div className="confirm-overlay"><p className="text-[11px] font-black text-slate-800 mb-2">전체 삭제하시겠습니까?</p><div className="flex gap-2"><button onClick={executeClear} className="px-5 py-1.5 bg-red-500 text-white rounded-lg text-[10px] font-black shadow-sm hover:bg-red-600">예</button><button onClick={() => setConfirmClear(null)} className="px-5 py-1.5 bg-slate-200 text-slate-600 rounded-lg text-[10px] font-black">아니오</button></div></div>}
+                                    <header className="widget-header"><div className="flex items-center gap-1.5"><Icon name="list-checks" className="text-indigo-600" size={12} /><h2 className="font-black text-[14px]">개인 루틴</h2></div><div className="flex gap-1"><button onClick={()=>updateData({personalRoutines: [...data.personalRoutines, {id:Date.now(), text:'', completed:false}]})} className="p-0.5 bg-indigo-600 text-white rounded hover:scale-110"><Icon name="plus" size={12} /></button><button onClick={()=>setConfirmClear('routine')} className="p-0.5 text-slate-300 hover:text-red-500"><Icon name="trash-2" size={12} /></button></div></header>
+                                    <div className="flex-grow overflow-y-auto custom-scrollbar px-1 py-1 selectable-text">
+                                        <div className="dual-column-grid">
+                                            {data.personalRoutines.map((r, idx) => (
+                                                <div key={r.id} draggable onDragStart={() => handleDragStart(idx)} onDragEnter={() => handleDragEnter(idx)} onDragEnd={handleDragEnd} onDragOver={(e) => e.preventDefault()} className="grid-item-container group relative">
+                                                    <EditableItem id={r.id} className="item-input-dynamic flex-1" value={r.text} completed={r.completed} color={r.color} showPalette={true} gapClass="gap-[6px]" activePaletteId={activePalette?.id} sectionInfo={{ type: 'personalRoutines' }} onRequestPalette={handleRequestPalette} onChange={(updates) => { const ni = data.personalRoutines.map(it => it.id === r.id ? { ...it, ...updates } : it); updateData({ personalRoutines: ni }); }} onDelete={() => { const ni = data.personalRoutines.filter(it => it.id !== r.id); updateData({ personalRoutines: ni }); }} />
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </section>
+
+                                {/* 오늘의 급식: 260px로 축소 */}
+                                <section className="glass-card flex-shrink-0 overflow-hidden h-[125px]" style={{ width: '260px' }}>
+                                    <header className="widget-header"><div className="flex items-center gap-1.5"><Icon name="utensils" className="text-orange-500" size={12} /><h2 className="font-black text-[14px]">오늘의 급식</h2></div><button onClick={() => { setIsSchoolSearchMode(!isSchoolSearchMode); setSchoolSearchTerm(''); setSchoolSearchResults([]); }} className={`p-1 ${isSchoolSearchMode ? 'text-indigo-600' : 'text-slate-300 hover:text-indigo-600'}`}><Icon name={isSchoolSearchMode ? 'chevron-left' : 'settings'} size={14} /></button></header>
+                                    <div className="flex-grow overflow-y-auto custom-scrollbar px-2 py-1 selectable-text">
+                                        {isSchoolSearchMode ? (
+                                            <div className="inline-search-box flex flex-col gap-1">
+                                                <input autoFocus type="text" value={schoolSearchTerm} onChange={e => setSchoolSearchTerm(e.target.value)} onKeyDown={e => { if(e.key === 'Enter') { const url=`https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=${encodeURIComponent(schoolSearchTerm)}`; fetch(url).then(r=>r.json()).then(d=>{ if(d.schoolInfo) setSchoolSearchResults(d.schoolInfo[1].row.map(r=>({name:r.SCHUL_NM,officeCode:r.ATPT_OFCDC_SC_CODE,schoolCode:r.SD_SCHUL_CODE}))); }); } }} className="flex-1 text-[10px] font-bold p-1 border rounded" placeholder="학교명 입력 후 엔터" />
+                                                <div className="inline-result-list custom-scrollbar overflow-y-auto max-h-[60px] flex flex-col gap-1">{schoolSearchResults.map(s => (<button key={s.schoolCode} onClick={() => { updateData({schoolInfo:s}); setIsSchoolSearchMode(false); }} className="text-left text-[9px] font-bold p-1 hover:bg-blue-50 rounded truncate">{s.name}</button>))}</div>
+                                            </div>
+                                        ) : (
+                                            isMealLoading ? (<div className="flex justify-center items-center h-full"><div className="loading-spinner"></div></div>) : 
+                                            data.schoolInfo ? (
+                                                <div className="dual-column-grid">{mealData.map((item, idx) => (<div key={idx} className="meal-item-text truncate" style={{fontSize: '12px', fontWeight: '800', color: '#334155', borderLeft: '2px solid #fdba74', paddingLeft: '4px', lineHeight: '1.2'}} title={item}>{item}</div>))}</div>
+                                            ) : (<div className="flex flex-col items-center justify-center h-full"><button onClick={() => setIsSchoolSearchMode(true)} className="text-[9px] bg-indigo-50 px-3 py-1.5 rounded-xl font-black text-indigo-600">학교 검색</button></div>)
+                                        )}
+                                    </div>
+                                </section>
+
+                                {/* 체크리스트: 남은 공간 모두 할당 (296px) */}
+                                <section className="glass-card flex-shrink-0 overflow-hidden h-[125px]" style={{ width: '296px' }}>
+                                    {confirmClear === 'checklist' && <div className="confirm-overlay"><p className="text-[11px] font-black text-slate-800 mb-2">전체 삭제하시겠습니까?</p><div className="flex gap-2"><button onClick={()=>{updateData({routines:[]}); setConfirmClear(null);}} className="px-5 py-1.5 bg-red-500 text-white rounded-lg text-[10px] font-black shadow-sm hover:bg-red-600">예</button><button onClick={() => setConfirmClear(null)} className="px-5 py-1.5 bg-slate-200 text-slate-600 rounded-lg text-[10px] font-black">아니오</button></div></div>}
+                                    <header className="widget-header"><div className="flex items-center gap-1.5"><Icon name="check-square" className="text-emerald-600" size={12} /><h2 className="font-black text-[14px]">체크리스트</h2></div><div className="flex gap-1"><button onClick={()=>updateData({routines: [...data.routines, {id:Date.now(), text:'', completed:false}]})} className="p-0.5 bg-indigo-600 text-white rounded hover:scale-110"><Icon name="plus" size={12} /></button><button onClick={()=>setConfirmClear('checklist')} className="p-0.5 text-slate-300 hover:text-red-500"><Icon name="trash-2" size={12} /></button></div></header>
+                                    <div className="flex-grow overflow-y-auto custom-scrollbar px-1 space-y-0 selectable-text">
+                                        {data.routines.map(r => (
+                                            <div key={r.id} className="flex items-center group relative min-h-[16px]">
+                                                <div className="flex-1">
+                                                    <EditableItem id={r.id} className="item-input-dynamic" value={r.text} completed={r.completed} color={r.color} showPalette={true} gapClass="gap-1.5" activePaletteId={activePalette?.id} sectionInfo={{ type: 'routines' }} onRequestPalette={handleRequestPalette} onChange={(updates) => { const ni = data.routines.map(it => it.id === r.id ? { ...it, ...updates } : it); updateData({ routines: ni }); }} onDelete={() => { const ni = data.routines.filter(it => it.id !== r.id); updateData({ routines: ni }); }} />
+                                                </div>
                                             </div>
                                         ))}
                                     </div>
-                                </div>
-                            </section>
+                                </section>
+                            </div>
 
-                            <section className="glass-card flex-shrink-0 overflow-hidden h-[125px]" style={{ width: 'calc(33.33% - 10px)' }}>
-                                <header className="widget-header"><div className="flex items-center gap-1.5"><Icon name="utensils" className="text-orange-500" size={12} /><h2 className="font-black text-[14px]">오늘의 급식</h2></div></header>
-                                <div className="flex-grow overflow-y-auto custom-scrollbar px-2 py-1">
-                                    <div className="dual-column-grid">{mealData.map((item, idx) => (<div key={idx} className="truncate text-[12px] font-black text-slate-700 border-l-2 border-orange-200 pl-1">{item}</div>))}</div>
-                                </div>
-                            </section>
+                            {/* 두 번째 줄: (비워두기 190+270) | 예산 현황(260) | 업무 메모(296) */}
+                            <div className="flex gap-[0.5rem] w-full items-stretch">
+                                {/* 스페이서 1: 수분 섭취(190px) 아래 */}
+                                <div className="flex-shrink-0" style={{ width: '190px' }}></div>
+                                
+                                {/* 스페이서 2: 개인 루틴(270px) 아래 */}
+                                <div className="flex-shrink-0" style={{ width: '270px' }}></div>
+
+                                {/* 예산 현황 카드: 오늘의 급식(260px) 아래 정렬 */}
+                                <section className="glass-card flex-shrink-0 overflow-hidden h-[135px]" style={{ width: '260px' }}>
+                                    {confirmClear === 'budget' && <div className="confirm-overlay"><p className="text-[11px] font-black text-slate-800 mb-2">전체 삭제하시겠습니까?</p><div className="flex gap-2"><button onClick={executeClear} className="px-5 py-1.5 bg-red-500 text-white rounded-lg text-[10px] font-black shadow-sm hover:bg-red-600">예</button><button onClick={() => setConfirmClear(null)} className="px-5 py-1.5 bg-slate-200 text-slate-600 rounded-lg text-[10px] font-black">아니오</button></div></div>}
+                                    <header className="widget-header"><div className="flex items-center gap-1.5"><Icon name="wallet" className="text-blue-500" size={12} /><h2 className="font-black text-[14px]">예산 현황</h2></div><button onClick={()=>setConfirmClear('budget')} className="p-0.5 text-slate-300 hover:text-red-500"><Icon name="trash-2" size={12} /></button></header>
+                                    <textarea className="w-full flex-grow bg-transparent px-2 pt-1 pb-2 text-[13px] font-bold text-slate-600 overflow-y-auto custom-scrollbar focus:bg-white resize-none selectable-text outline-none" value={data.budgetMemo} onChange={(e)=>updateData({budgetMemo: e.target.value})} placeholder="내용을 입력하세요." />
+                                </section>
+
+                                {/* 업무 메모 카드: 체크리스트(296px) 아래 배치하여 너비 일치 */}
+                                <section className="glass-card flex-shrink-0 overflow-hidden h-[135px] relative" style={{ width: '296px' }}>
+                                    {confirmClear === 'memo' && <div className="confirm-overlay"><p className="text-[11px] font-black text-slate-800 mb-2">전체 삭제하시겠습니까?</p><div className="flex gap-2"><button onClick={executeClear} className="px-5 py-1.5 bg-red-500 text-white rounded-lg text-[10px] font-black shadow-sm hover:bg-red-600">예</button><button onClick={() => setConfirmClear(null)} className="px-5 py-1.5 bg-slate-200 text-slate-600 rounded-lg text-[10px] font-black">아니오</button></div></div>}
+                                    <header className="widget-header"><div className="flex items-center gap-1.5"><Icon name="sticky-note" className="text-amber-600" size={12} /><h2 className="font-black text-[14px]">업무 메모</h2></div><button onClick={()=>setConfirmClear('memo')} className="p-0.5 text-slate-300 hover:text-red-500"><Icon name="trash-2" size={12} /></button></header>
+                                    <textarea className="w-full flex-grow bg-transparent px-2 pt-1 pb-2 text-[13px] font-bold text-slate-600 overflow-y-auto custom-scrollbar focus:bg-white resize-none selectable-text outline-none" value={data.generalMemo} onChange={(e)=>updateData({generalMemo: e.target.value})} />
+                                </section>
+                            </div>
                         </div>
-
-                        <aside className="flex-[0.3] flex flex-col gap-[0.4rem] overflow-hidden">
-                            <section className="glass-card h-[125px] overflow-hidden">
-                                <header className="widget-header"><div className="flex items-center gap-1.5"><Icon name="wallet" className="text-emerald-600" size={12} /><h2 className="font-black text-[14px]">예산 현황</h2></div></header>
-                                <div className="flex-grow overflow-y-auto custom-scrollbar px-2">
-                                    <table className="budget-table">
-                                        <thead><tr><th>예산명</th><th className="text-right">잔액</th></tr></thead>
-                                        <tbody>
-                                            {parsedBudgets.map((b, i) => (
-                                                <tr key={i}>
-                                                    <td className="truncate max-w-[100px]">{b.name}</td>
-                                                    <td className="budget-amount">{b.balance.toLocaleString()}원</td>
-                                                </tr>
-                                            ))}
-                                            {parsedBudgets.length === 0 && <tr><td colSpan="2" className="text-center text-slate-300 py-4 font-bold text-[10px]">데이터 없음</td></tr>}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </section>
-                            <section className="glass-card h-[135px] overflow-hidden relative">
-                                <header className="widget-header"><div className="flex items-center gap-1.5"><Icon name="sticky-note" className="text-amber-600" size={12} /><h2 className="font-black text-[14px]">업무 메모</h2></div></header>
-                                <textarea className="w-full flex-grow bg-transparent px-2 pt-1 pb-2 text-[13px] font-bold text-slate-600 focus:bg-white resize-none outline-none custom-scrollbar" value={data.generalMemo} onChange={(e)=>updateData({generalMemo: e.target.value})} />
-                            </section>
-                        </aside>
                     </div>
 
                     {activePalette && (
                         <div ref={paletteRef} className="global-color-palette" style={{ top: `${activePalette.pos.top}px`, left: `${activePalette.pos.left}px` }} onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}>
-                            {PALETTE.map(p => (<button key={p.name} className="w-[12px] h-[12px] rounded-full hover:scale-125 transition-transform" style={{ backgroundColor: p.code }} onClick={() => handleGlobalColorSelect(p.code)} />))}
+                            {PALETTE.map(p => (
+                                <button key={p.name} className="w-[12px] h-[12px] rounded-full hover:scale-125 transition-transform" style={{ backgroundColor: p.code }} onClick={() => handleGlobalColorSelect(p.code)} />
+                            ))}
                         </div>
                     )}
                 </div>
