@@ -61,8 +61,8 @@
             flex-direction: column; 
             padding-top: 2px;
             padding-bottom: 2px;
-            padding-left: 7px;
-            padding-right: 2px;
+            padding-left: 5px;
+            padding-right: 1px;
             min-width: 0; 
             overflow-x: hidden !important; 
             overflow-y: hidden; 
@@ -136,7 +136,6 @@
         .calendar-item-row { display: flex; align-items: flex-start; width: 100%; gap: 6px; min-height: 18.8px; position: relative; }
         .delete-btn-box { display: flex; align-items: center; justify-content: center; height: 16.8px; width: 18px; }
 
-        /* 예산 현황 표 스타일 (중앙 정렬) */
         .budget-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 10px; }
         .budget-table th { background: #f8fafc; color: #64748b; font-weight: 900; padding: 4px 2px; border-bottom: 1px solid #e2e8f0; text-align: center; position: sticky; top: 0; z-index: 10; }
         .budget-table td { padding: 4px 2px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; line-height: 1.2; text-align: center; }
@@ -144,7 +143,6 @@
         .budget-amount { font-family: 'Pretendard', monospace; font-weight: 700; color: #64748b; text-align: center; }
         .budget-balance { color: #6366f1; font-weight: 800; text-align: center; }
 
-        /* 디데이 스타일 */
         .dday-badge {
             cursor: pointer;
             background: #6366f1;
@@ -176,7 +174,8 @@
         const BUDGET_SHEET = "교사용_예산";
         const BUDGET_SITE_URL = "https://sueb10043-tech.github.io/schoolbudget/";
 
-        const PALETTE = [{ name: 'black', code: '#1E293B' }, { name: 'red', code: '#ef4444' }, { name: 'blue', code: '#3b82f6' }, { name: 'green', code: '#10b981' }, { name: 'purple', code: '#a855f7' }];
+        /* [수정] 팔레트의 파란색 코드를 행사명 파란색(#2563eb)과 일치하도록 변경 */
+        const PALETTE = [{ name: 'black', code: '#1E293B' }, { name: 'red', code: '#ef4444' }, { name: 'blue', code: '#2563eb' }, { name: 'green', code: '#10b981' }, { name: 'purple', code: '#a855f7' }];
         const BG_PALETTE = [{ name: 'pink', code: '#FFF1F2' }, { name: 'sky', code: '#F0F9FF' }, { name: 'green', code: '#F0FDF4' }, { name: 'reset', code: '#FFFFFF', icon: 'rotate-ccw' }];
 
         const Icon = ({ name, className, size = 12 }) => {
@@ -232,6 +231,7 @@
                             </div>
                         )}
                         <textarea ref={textareaRef} rows={1} onFocus={handleFocus} onMouseDown={(e) => { e.stopPropagation(); if (textareaRef.current) textareaRef.current.focus(); }}
+                            spellCheck={false}
                             className={`${className} outline-none overflow-hidden resize-none flex-1 break-all ${completed ? 'strikethrough-line' : ''}`} 
                             style={{ color: completed ? '' : (color || '#1E293B'), fontSize: '12px', padding: '0' }} 
                             value={value} onChange={(e) => onChange({text: e.target.value})} onInput={adjustHeight} />
@@ -462,7 +462,7 @@
                                             {isDDayPopOpen && (
                                                 <div ref={ddayPopRef} className="popover-base top-full left-0 mt-2">
                                                     <div className="dday-input-group">
-                                                        <div className="flex flex-col gap-1"><label className="text-[9px] font-black text-slate-400">내용</label><input type="text" className="dday-field" placeholder="방학, 시험 등" value={data.dDayTitle} onChange={(e) => updateData({ dDayTitle: e.target.value })} /></div>
+                                                        <div className="flex flex-col gap-1"><label className="text-[9px] font-black text-slate-400">내용</label><input type="text" className="dday-field" placeholder="방학, 시험 등" value={data.dDayTitle} onChange={(e) => updateData({ dDayTitle: e.target.value })} spellCheck={false} /></div>
                                                         <div className="flex flex-col gap-1"><label className="text-[9px] font-black text-slate-400">날짜</label><input type="date" className="dday-field" value={data.dDayDate} onChange={(e) => updateData({ dDayDate: e.target.value })} /></div>
                                                         <button onClick={() => setIsDDayPopOpen(false)} className="bg-indigo-600 text-white text-[10px] font-black py-1.5 rounded-md mt-1">확인</button>
                                                     </div>
@@ -490,14 +490,16 @@
                                             <div key={dStr} className={`table-cell group ${isT ? 'today-highlight' : ''}`} style={{ backgroundColor: dayData.bgColor }}>
                                                 <div className="flex items-start mb-0.5 px-0 shrink-0 h-[20px] overflow-visible">
                                                     <div className="flex items-center gap-1 flex-1 min-w-0 h-[20px]">
-                                                        <span className={`text-[12px] font-black h-[20px] leading-[20px] shrink-0 ${date.getDay()===0?'text-red-500':date.getDay()===6?'text-indigo-500':'text-slate-400'}`}>{date.getDate()}</span>
+                                                        <span className={`text-[12px] font-black h-full flex items-center shrink-0 ${date.getDay()===0?'text-red-500':date.getDay()===6?'text-indigo-500':'text-slate-400'}`}>
+                                                            {date.getDate()}
+                                                        </span>
                                                         <input 
                                                             type="text" 
                                                             value={dayData.holiday || ''} 
                                                             onChange={(e) => updateData({monthlyData: {...data.monthlyData, [dStr]: {...dayData, holiday: e.target.value}}})} 
-                                                            /* [복구] 배경색이 핑크색(#FFF1F2)이면 글자색을 빨간색(#ef4444)으로, 아니면 파란색(#2563eb)으로 자동 변경 */
                                                             style={{ color: dayData.bgColor === '#FFF1F2' ? '#ef4444' : '#2563eb' }}
-                                                            className="bg-transparent border-none text-[11px] font-black outline-none w-full h-[20px] leading-[20px]" 
+                                                            className="bg-transparent border-none text-[11px] font-black outline-none w-full h-full p-0 flex items-center leading-none" 
+                                                            spellCheck={false}
                                                         />
                                                     </div>
                                                     <button onClick={()=>{ const cur = data.monthlyData[dStr] || { items: [] }; updateData({monthlyData: {...data.monthlyData, [dStr]: {...cur, items: [...cur.items, {id:Date.now(), text:'', completed:false, color:'#1E293B'}]}}}); }} className="opacity-0 group-hover:opacity-100 p-0.5 bg-indigo-600 text-white rounded transition-all h-[16px] flex items-center mt-[2px] shrink-0"><Icon name="plus" size={8} /></button>
@@ -580,12 +582,18 @@
                                 </section>
 
                                 <section className="glass-card flex-shrink-0 overflow-hidden h-[125px]" style={{ width: '260px' }}>
-                                    <header className="widget-header"><div className="flex items-center gap-1.5"><Icon name="utensils" className="text-orange-500" size={12} /><h2 className="font-black text-[14px]">오늘의 급식</h2></div><button onClick={() => { setIsSchoolSearchMode(!isSchoolSearchMode); setSchoolSearchTerm(''); setSchoolSearchResults([]); }} className={`p-1 ${isSchoolSearchMode ? 'text-indigo-600' : 'text-slate-300 hover:text-indigo-600'}`}><Icon name={isSchoolSearchMode ? 'chevron-left' : 'settings'} size={14} /></button></header>
+                                    <header className="widget-header"><div className="flex items-center gap-1.5"><Icon name="utensils" className="text-orange-500" size={12} /><h2 className="font-black text-[14px]">오늘의 급식</h2></div><button onClick={() => { setIsSchoolSearchMode(!isSchoolSearchMode); setIsMealLoading(false); }} className={`p-1 ${isSchoolSearchMode ? 'text-indigo-600' : 'text-slate-300 hover:text-indigo-600'}`}><Icon name={isSchoolSearchMode ? 'chevron-left' : 'settings'} size={14} /></button></header>
                                     <div className="flex-grow overflow-y-auto custom-scrollbar px-2 py-1 selectable-text">
                                         {isSchoolSearchMode ? (
                                             <div className="inline-search-box flex flex-col gap-1">
-                                                <input autoFocus type="text" value={schoolSearchTerm} onChange={e => setSchoolSearchTerm(e.target.value)} onKeyDown={e => { if(e.key === 'Enter') { fetch(`https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=${encodeURIComponent(schoolSearchTerm)}`).then(r=>r.json()).then(d=>{ if(d.schoolInfo) setSchoolSearchResults(d.schoolInfo[1].row.map(r=>({name:r.SCHUL_NM,officeCode:r.ATPT_OFCDC_SC_CODE,schoolCode:r.SD_SCHUL_CODE}))); }); } }} className="flex-1 text-[10px] font-bold p-1 border rounded" placeholder="학교명 입력 후 엔터" />
-                                                <div className="inline-result-list custom-scrollbar overflow-y-auto max-h-[60px] flex flex-col gap-1">{schoolSearchResults.map(s => (<button key={s.schoolCode} onClick={() => { updateData({schoolInfo:s}); setIsSchoolSearchMode(false); }} className="text-left text-[9px] font-bold p-1 hover:bg-blue-50 rounded truncate">{s.name}</button>))}</div>
+                                                <input autoFocus type="text" className="flex-1 text-[10px] font-bold p-1 border rounded" placeholder="학교명 입력 후 엔터" spellCheck={false} onKeyDown={async (e) => { 
+                                                    if(e.key === 'Enter') { 
+                                                        const res = await fetch(`https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=${encodeURIComponent(e.target.value)}`);
+                                                        const d = await res.json();
+                                                        if(d.schoolInfo) updateData({ schoolInfo: { name: d.schoolInfo[1].row[0].SCHUL_NM, officeCode: d.schoolInfo[1].row[0].ATPT_OFCDC_SC_CODE, schoolCode: d.schoolInfo[1].row[0].SD_SCHUL_CODE } });
+                                                        setIsSchoolSearchMode(false);
+                                                    }
+                                                }} />
                                             </div>
                                         ) : (
                                             isMealLoading ? (<div className="flex justify-center items-center h-full"><div className="loading-spinner"></div></div>) : 
@@ -632,7 +640,7 @@
                                 <section className="glass-card flex-shrink-0 overflow-hidden h-[135px] relative" style={{ width: '311px' }}>
                                     {confirmClear === 'memo' && <div className="confirm-overlay"><p className="text-[11px] font-black text-slate-800 mb-2">전체 삭제하시겠습니까?</p><div className="flex gap-2"><button onClick={executeClear} className="px-5 py-1.5 bg-red-500 text-white rounded-lg text-[10px] font-black shadow-sm hover:bg-red-600">예</button><button onClick={() => setConfirmClear(null)} className="px-5 py-1.5 bg-slate-200 text-slate-600 rounded-lg text-[10px] font-black">아니오</button></div></div>}
                                     <header className="widget-header"><div className="flex items-center gap-1.5"><Icon name="sticky-note" className="text-amber-600" size={12} /><h2 className="font-black text-[14px]">업무 메모</h2></div><button onClick={()=>setConfirmClear('memo')} className="p-0.5 text-slate-300 hover:text-red-500 transition-colors"><Icon name="trash-2" size={12} /></button></header>
-                                    <textarea className="w-full flex-grow bg-transparent px-2 pt-1 pb-2 text-[13px] font-bold text-slate-600 overflow-y-auto custom-scrollbar focus:bg-white resize-none selectable-text outline-none" value={data.generalMemo} onChange={(e)=>updateData({generalMemo: e.target.value})} />
+                                    <textarea className="w-full flex-grow bg-transparent px-2 pt-1 pb-2 text-[13px] font-bold text-slate-600 overflow-y-auto custom-scrollbar focus:bg-white resize-none selectable-text outline-none" value={data.generalMemo} onChange={(e)=>updateData({generalMemo: e.target.value})} spellCheck={false} />
                                 </section>
                             </div>
                         </div>
