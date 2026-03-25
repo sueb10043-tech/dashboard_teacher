@@ -45,7 +45,7 @@
         .dashboard-container::-webkit-scrollbar { display: none; }
 
         .calendar-section { height: 750px; display: flex; flex-direction: column; padding: 0.5rem; flex-shrink: 0; overflow: visible; z-index: 10; }
-        .remainder-section { height: auto; padding: 0.2rem 0.5rem 0.5rem; display: flex; flex-direction: column; gap: 0.5rem; flex-shrink: 0; width: 100%; overflow: visible; position: relative; z-index: 5; }
+        .remainder-section { height: auto; padding: 0.2rem 0.5rem 0.5rem 0.5rem; display: flex; flex-direction: column; gap: 0.5rem; flex-shrink: 0; width: 100%; overflow: visible; position: relative; z-index: 5; }
         .glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(8px); border: 1px solid rgba(203, 213, 225, 0.5); border-radius: 0.75rem; box-shadow: 0 4px 12px rgba(0,0,0,0.08); display: flex; flex-direction: column; min-height: 0; position: relative; }
         
         .calendar-grid-parent { 
@@ -162,7 +162,6 @@
         .dday-field:focus { border-color: #6366f1; }
         
         .link-item-row { display: flex; align-items: center; gap: 4px; width: 100%; min-height: 24px; border-bottom: 1px solid #f8fafc; }
-        /* [수정] 버튼 클릭 시 아웃라인 제거 및 텍스트 선택 방지 */
         .link-text-btn { 
             text-align: left; font-size: 11px; font-weight: 800; color: #475569; 
             flex: 1; padding: 2px 4px; border-radius: 4px; overflow: hidden; 
@@ -336,12 +335,22 @@
                 if (!GAS_URL) return;
                 setIsSyncing(true);
                 try {
-                    const res = await fetch(`${GAS_URL}?sheet=${encodeURIComponent(DASHBOARD_SHEET)}`);
-                    const cloudData = await res.json();
+                    // [수정] range 파라미터 대응 및 파싱 로직 보강
+                    const res = await fetch(`${GAS_URL}?sheet=${encodeURIComponent(DASHBOARD_SHEET)}&range=A1`);
+                    const result = await res.json();
+                    
+                    // GAS doGet 로직에 따라 값이 문자열로 올 수 있음
+                    let cloudData = result;
+                    if (typeof result === 'string' && result.trim() !== '') {
+                        try { cloudData = JSON.parse(result); } catch(e) { cloudData = {}; }
+                    }
+
                     if (cloudData && typeof cloudData === 'object' && Object.keys(cloudData).length > 0) {
                         setData(prev => ({...prev, ...cloudData}));
                     }
-                } catch (e) {} finally { setIsInitialLoading(false); setIsSyncing(false); }
+                } catch (e) {
+                    console.error("데이터 로드 실패:", e);
+                } finally { setIsInitialLoading(false); setIsSyncing(false); }
             }, []);
 
             const fetchBudgetData = useCallback(async () => {
@@ -358,8 +367,19 @@
                 if (isInitialLoading || !GAS_URL) return;
                 setIsSyncing(true);
                 try {
-                    await fetch(`${GAS_URL}?sheet=${encodeURIComponent(DASHBOARD_SHEET)}`, { method: 'POST', mode: 'no-cors', body: JSON.stringify(currentData) });
-                } catch (e) {} finally { setTimeout(() => setIsSyncing(false), 800); }
+                    // [수정] 수정된 GAS doPost 규격 { data: ..., range: ... } 에 맞게 수정
+                    const payload = {
+                        data: JSON.stringify(currentData),
+                        range: "A1"
+                    };
+                    await fetch(`${GAS_URL}?sheet=${encodeURIComponent(DASHBOARD_SHEET)}`, { 
+                        method: 'POST', 
+                        mode: 'no-cors', 
+                        body: JSON.stringify(payload) 
+                    });
+                } catch (e) {
+                    console.error("데이터 저장 실패:", e);
+                } finally { setTimeout(() => setIsSyncing(false), 800); }
             }, [isInitialLoading]);
 
             useEffect(() => { loadFromCloud(); fetchBudgetData(); }, [loadFromCloud, fetchBudgetData]);
@@ -720,7 +740,6 @@
                                             </button>
                                         </div>
                                     </header>
-                                    {/* [수정] selectable-text 제거하여 원치 않는 텍스트 커서 방지 */}
                                     <div className="flex-grow overflow-y-auto custom-scrollbar px-1 py-1 relative">
                                         {isLinkEditMode ? (
                                             <div className="flex flex-col gap-0.5">
@@ -735,7 +754,6 @@
                                         ) : (
                                             (data.links || []).map((link) => (
                                                 <div key={link.id} className="link-item-row group relative">
-                                                    {/* [수정] 주소가 없으면 클릭 반응 없음, 커서 스타일 동적 변경 */}
                                                     <button 
                                                         onClick={() => openLink(link)} 
                                                         className={`link-text-btn ${!link.url ? 'cursor-default hover:bg-transparent' : 'cursor-pointer'}`}
@@ -743,7 +761,6 @@
                                                         {link.text}
                                                     </button>
                                                     <div className="flex gap-0.5">
-                                                        {/* [수정] 오직 이 버튼을 눌렀을 때만 수정 창 노출 */}
                                                         <button onClick={() => handleEditUrl(link)} className={`link-icon-btn ${link.url ? 'active' : ''} flex items-center justify-center h-4 w-4`} title="URL 설정"><Icon name="link-2" size={10} /></button>
                                                         <button onClick={() => { const nl = (data.links || []).filter(l => l.id !== link.id); updateData({ links: nl }); }} className="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 p-0.5 flex items-center justify-center h-4 w-4"><Icon name="x" size={10} /></button>
                                                     </div>
