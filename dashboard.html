@@ -45,7 +45,7 @@
         .dashboard-container::-webkit-scrollbar { display: none; }
 
         .calendar-section { height: 750px; display: flex; flex-direction: column; padding: 0.5rem; flex-shrink: 0; overflow: visible; z-index: 10; }
-        .remainder-section { height: auto; padding: 0.2rem 0.5rem 0.5rem 0.5rem; display: flex; flex-direction: column; gap: 0.5rem; flex-shrink: 0; width: 100%; overflow: visible; position: relative; z-index: 5; }
+        .remainder-section { height: auto; padding: 0.2rem 0.5rem 0.5rem; display: flex; flex-direction: column; gap: 0.5rem; flex-shrink: 0; width: 100%; overflow: visible; position: relative; z-index: 5; }
         .glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(8px); border: 1px solid rgba(203, 213, 225, 0.5); border-radius: 0.75rem; box-shadow: 0 4px 12px rgba(0,0,0,0.08); display: flex; flex-direction: column; min-height: 0; position: relative; }
         
         .calendar-grid-parent { 
@@ -162,7 +162,13 @@
         .dday-field:focus { border-color: #6366f1; }
         
         .link-item-row { display: flex; align-items: center; gap: 4px; width: 100%; min-height: 24px; border-bottom: 1px solid #f8fafc; }
-        .link-text-btn { text-align: left; font-size: 11px; font-weight: 800; color: #475569; flex: 1; padding: 2px 4px; border-radius: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        /* [수정] 버튼 클릭 시 아웃라인 제거 및 텍스트 선택 방지 */
+        .link-text-btn { 
+            text-align: left; font-size: 11px; font-weight: 800; color: #475569; 
+            flex: 1; padding: 2px 4px; border-radius: 4px; overflow: hidden; 
+            text-overflow: ellipsis; white-space: nowrap; 
+            outline: none !important; user-select: none !important;
+        }
         .link-text-btn:hover { background: #f1f5f9; color: #6366f1; }
         
         .link-icon-btn { color: #cbd5e1; padding: 2px; border-radius: 4px; opacity: 0; transition: opacity 0.1s; }
@@ -181,6 +187,7 @@
             padding: 0 4px;
             cursor: grab;
             transition: background 0.1s;
+            user-select: none;
         }
         .slim-drag-item:active { cursor: grabbing; background: #f1f5f9; }
         .drag-handle-slim { color: #cbd5e1; flex-shrink: 0; }
@@ -504,7 +511,6 @@
                 updateData({ links: [...(data.links || []), newLink] });
             };
 
-            // [수정] 이름 클릭 시 주소가 있을 때만 연결, 없으면 아무 기능 안 함
             const openLink = (link) => {
                 if (isLinkEditMode) return;
                 if (link.url && link.url.trim() !== "") {
@@ -512,7 +518,6 @@
                     if (!url.startsWith('http://') && !url.startsWith('https://')) url = 'https://' + url;
                     window.open(url, '_blank');
                 }
-                // 주소가 없는 경우 더 이상 handleEditUrl을 호출하지 않음
             };
 
             const handleEditUrl = (link) => {
@@ -715,7 +720,8 @@
                                             </button>
                                         </div>
                                     </header>
-                                    <div className="flex-grow overflow-y-auto custom-scrollbar px-1 py-1 selectable-text relative">
+                                    {/* [수정] selectable-text 제거하여 원치 않는 텍스트 커서 방지 */}
+                                    <div className="flex-grow overflow-y-auto custom-scrollbar px-1 py-1 relative">
                                         {isLinkEditMode ? (
                                             <div className="flex flex-col gap-0.5">
                                                 {(data.links || []).map((link, idx) => (
@@ -729,11 +735,15 @@
                                         ) : (
                                             (data.links || []).map((link) => (
                                                 <div key={link.id} className="link-item-row group relative">
-                                                    {/* [수정] openLink 내부 로직 변경으로 주소 없을 땐 반응 안 함, cursor-default 추가 */}
-                                                    <button onClick={() => openLink(link)} className={`link-text-btn ${!link.url ? 'cursor-default hover:bg-transparent' : ''}`}>
+                                                    {/* [수정] 주소가 없으면 클릭 반응 없음, 커서 스타일 동적 변경 */}
+                                                    <button 
+                                                        onClick={() => openLink(link)} 
+                                                        className={`link-text-btn ${!link.url ? 'cursor-default hover:bg-transparent' : 'cursor-pointer'}`}
+                                                    >
                                                         {link.text}
                                                     </button>
                                                     <div className="flex gap-0.5">
+                                                        {/* [수정] 오직 이 버튼을 눌렀을 때만 수정 창 노출 */}
                                                         <button onClick={() => handleEditUrl(link)} className={`link-icon-btn ${link.url ? 'active' : ''} flex items-center justify-center h-4 w-4`} title="URL 설정"><Icon name="link-2" size={10} /></button>
                                                         <button onClick={() => { const nl = (data.links || []).filter(l => l.id !== link.id); updateData({ links: nl }); }} className="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 p-0.5 flex items-center justify-center h-4 w-4"><Icon name="x" size={10} /></button>
                                                     </div>
@@ -741,7 +751,7 @@
                                             ))
                                         )}
                                         {isLinkEditPopOpen && (
-                                            <div ref={linkPopRef} className="popover-base left-0 top-0 w-[170px] !z-[9999]">
+                                            <div ref={linkPopRef} className="popover-base left-0 top-0 w-[170px] !z-[9999] selectable-text">
                                                 <div className="flex flex-col gap-2">
                                                     <div className="flex flex-col gap-1">
                                                         <label className="text-[10px] font-black text-slate-400">제목 수정</label>
