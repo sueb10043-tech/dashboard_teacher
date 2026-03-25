@@ -56,11 +56,13 @@
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 10px; }
         
-        .item-input-dynamic { border: none !important; background: transparent !important; width: 100% !important; font-size: 12px; font-weight: bold; padding: 0 !important; margin: 0 !important; resize: none !important; line-height: 1.4 !important; display: block; overflow: hidden; word-break: break-all; white-space: pre-wrap; height: auto; }
+        /* 텍스트 너비가 체크박스를 밀어내지 않도록 flex: 1 적용 */
+        .item-input-dynamic { border: none !important; background: transparent !important; flex: 1 !important; width: 0; font-size: 12px; font-weight: bold; padding: 0 !important; margin: 0 !important; resize: none !important; line-height: 1.4 !important; display: block; overflow: hidden; word-break: break-all; white-space: pre-wrap; height: auto; }
         .strikethrough-line { text-decoration: line-through !important; text-decoration-color: #475569 !important; text-decoration-thickness: 1.5px !important; color: #94a3b8 !important; }
         
-        .checkbox-container { height: 16.8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-        .compact-checkbox { width: 13px !important; height: 13px !important; accent-color: #4f46e5; cursor: pointer; margin: 0 !important; padding: 0 !important; vertical-align: middle; }
+        /* 체크박스 컨테이너 위치 고정 */
+        .checkbox-container { width: 16px; height: 16.8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+        .compact-checkbox { width: 13px !important; height: 13px !important; accent-color: #4f46e5; cursor: pointer; margin: 0 !important; padding: 0 !important; }
         
         .popover-base { position: absolute; background: white !important; border: 1px solid #e2e8f0; border-radius: 1rem; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15); z-index: 9999; padding: 10px; animation: popFade 0.12s ease-out; }
         @keyframes popFade { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
@@ -107,6 +109,9 @@
         .slim-drag-item:active { cursor: grabbing; background: #f1f5f9; }
         .drag-handle-slim { color: #cbd5e1; flex-shrink: 0; }
         .edit-mode-highlight { background: rgba(99, 102, 241, 0.05); }
+
+        /* 체크박스와 텍스트를 담는 가로 행 레이아웃 고정 */
+        .calendar-item-row { display: flex !important; flex-direction: row !important; align-items: flex-start !important; width: 100%; gap: 6px; min-height: 18.8px; position: relative; }
     </style>
 </head>
 <body>
@@ -160,7 +165,7 @@
 
         const formatKRW = (val) => (val || 0).toLocaleString('ko-KR');
 
-        const EditableItem = ({ id, value, completed, color, onChange, onDelete, className, hideCheckbox = false, showPalette = false, gapClass = "gap-1.5", onRequestPalette, activePaletteId, sectionInfo }) => {
+        const EditableItem = ({ id, value, completed, color, onChange, onDelete, className, hideCheckbox = false, gapClass = "gap-1.5" }) => {
             const textareaRef = useRef(null);
             const adjustHeight = () => { 
                 if (textareaRef.current) { 
@@ -179,7 +184,7 @@
                         )}
                         <textarea ref={textareaRef} rows={1} onMouseDown={(e) => { e.stopPropagation(); if (textareaRef.current) textareaRef.current.focus(); }}
                             spellCheck={false}
-                            className={`${className} outline-none overflow-hidden resize-none flex-1 break-all ${completed ? 'strikethrough-line' : ''}`} 
+                            className={`${className} outline-none overflow-hidden resize-none ${completed ? 'strikethrough-line' : ''}`} 
                             style={{ color: completed ? '' : (color || '#1E293B'), fontSize: '12px', padding: '0' }} 
                             value={value} onChange={(e) => onChange({text: e.target.value})} onInput={adjustHeight} />
                         <div className="delete-btn-box shrink-0">
@@ -236,7 +241,6 @@
                 setData(prev => ({ ...prev, ...updates }));
             }, []);
 
-            // [핵심 수정] undoWater 함수 정의 및 관련 훅들을 정의부 상단으로 이동
             const addWater = useCallback((amount) => {
                 const newIntake = (waterIntake || 0) + amount;
                 const newLogs = [...(waterLogs || []), amount];
@@ -301,11 +305,9 @@
                     const res = await fetch(`${GAS_URL}?sheet=${encodeURIComponent(DASHBOARD_SHEET)}&range=${SAVE_RANGE}`);
                     const result = await res.json();
                     let values = typeof result === 'string' ? JSON.parse(result) : result;
-
                     if (Array.isArray(values) && values[0] && (values[0][0] || values[0][1])) {
                         const row = values[0];
                         const safeJSON = (str) => { if(!str) return null; try { return JSON.parse(str); } catch(e) { return null; } };
-                        
                         const mergedData = {
                             monthlyData: safeJSON(row[0]) || {},
                             routines: safeJSON(row[1]) || [],
@@ -321,9 +323,7 @@
                         const legacyRes = await fetch(`${GAS_URL}?sheet=${encodeURIComponent(DASHBOARD_SHEET)}&range=${LEGACY_RANGE}`);
                         const legacyResult = await legacyRes.json();
                         let oldData = typeof legacyResult === 'string' ? JSON.parse(legacyResult) : legacyResult;
-                        if (oldData && oldData.monthlyData) {
-                            setData(oldData);
-                        }
+                        if (oldData && oldData.monthlyData) { setData(oldData); }
                     }
                 } catch (e) { console.error("데이터 로드 중 오류:", e); }
                 finally { setIsInitialLoading(false); setIsSyncing(false); }
@@ -345,9 +345,7 @@
                             JSON.stringify({ schoolInfo: currentData.schoolInfo, lastResetDate: currentData.lastResetDate, dDayDate: currentData.dDayDate, dDayTitle: currentData.dDayTitle })
                         ]]
                     };
-                    await fetch(`${GAS_URL}?sheet=${encodeURIComponent(DASHBOARD_SHEET)}`, { 
-                        method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) 
-                    });
+                    await fetch(`${GAS_URL}?sheet=${encodeURIComponent(DASHBOARD_SHEET)}`, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
                     setTimeout(() => setIsSyncing(false), 800);
                 } catch (e) { console.error("데이터 저장 실패:", e); setIsSyncing(false); }
             }, [isInitialLoading]);
@@ -363,11 +361,7 @@
             }, []);
 
             useEffect(() => { loadFromCloud(); fetchBudgetData(); }, [loadFromCloud, fetchBudgetData]);
-
-            useEffect(() => {
-                const timer = setTimeout(() => { saveToCloud(data); }, 1500);
-                return () => clearTimeout(timer);
-            }, [data, saveToCloud]);
+            useEffect(() => { const timer = setTimeout(() => { saveToCloud(data); }, 1500); return () => clearTimeout(timer); }, [data, saveToCloud]);
 
             useEffect(() => {
                 if (!data.schoolInfo) { setMealData([]); return; }
@@ -407,7 +401,6 @@
             const dragItem = useRef(null); const dragOverItem = useRef(null);
             const handleDragStart = (idx) => { dragItem.current = idx; };
             const handleDragEnter = (idx) => { dragOverItem.current = idx; };
-            
             const handleRoutineDragEnd = () => {
                 if (dragItem.current === null || dragOverItem.current === null) return;
                 const copyListItems = [...(data.personalRoutines || [])];
@@ -416,7 +409,6 @@
                 dragItem.current = null; dragOverItem.current = null;
                 updateData({ personalRoutines: copyListItems });
             };
-            
             const handleLinkDragEnd = () => {
                 if (dragItem.current === null || dragOverItem.current === null) return;
                 const copyListItems = [...(data.links || [])];
@@ -424,14 +416,6 @@
                 copyListItems.splice(dragItem.current, 1); copyListItems.splice(dragOverItem.current, 0, dragItemContent);
                 dragItem.current = null; dragOverItem.current = null;
                 updateData({ links: copyListItems });
-            };
-
-            const executeClear = () => {
-                if (confirmClear === 'routine') updateData({ personalRoutines: [] });
-                if (confirmClear === 'checklist') updateData({ routines: [] });
-                if (confirmClear === 'memo') updateData({ generalMemo: '' });
-                if (confirmClear === 'evaluation') updateData({ evaluationMemo: '' });
-                setConfirmClear(null);
             };
 
             useEffect(() => {
@@ -446,6 +430,14 @@
                 document.addEventListener('mousedown', handleClickOutside);
                 return () => document.removeEventListener('mousedown', handleClickOutside);
             }, [isMonthPickerOpen, isGoalEditPopOpen, isAddWaterPopOpen, isWaterHistoryOpen, isDDayPopOpen, isLinkEditPopOpen]);
+
+            const executeClear = () => {
+                if (confirmClear === 'routine') updateData({ personalRoutines: [] });
+                if (confirmClear === 'checklist') updateData({ routines: [] });
+                if (confirmClear === 'memo') updateData({ generalMemo: '' });
+                if (confirmClear === 'evaluation') updateData({ evaluationMemo: '' });
+                setConfirmClear(null);
+            };
 
             return (
                 <div className="dashboard-container">
@@ -465,10 +457,7 @@
                                     )}
                                     <h2 className="font-black text-[15px] text-slate-800 tracking-tight truncate">{viewDate.getFullYear()}년 {viewDate.getMonth()+1}월 월별 계획</h2>
                                     <div className="relative ml-4">
-                                        <button onClick={() => setIsDDayPopOpen(!isDDayPopOpen)} className="dday-badge">
-                                            <Icon name="flag" size={10} />
-                                            <span>{data.dDayDate ? `${data.dDayTitle || '이벤트'} ${dDayValue}` : "D-Day 설정"}</span>
-                                        </button>
+                                        <button onClick={() => setIsDDayPopOpen(!isDDayPopOpen)} className="dday-badge"><Icon name="flag" size={10} /><span>{data.dDayDate ? `${data.dDayTitle || '이벤트'} ${dDayValue}` : "D-Day 설정"}</span></button>
                                         {isDDayPopOpen && (
                                             <div ref={ddayPopRef} className="popover-base top-full left-0 mt-2">
                                                 <div className="flex flex-col gap-2 w-44">
@@ -505,7 +494,7 @@
                                                 </div>
                                                 <button onClick={()=>{ const cur = (data.monthlyData || {})[dStr] || { items: [] }; updateData({monthlyData: {...(data.monthlyData || {}), [dStr]: {...cur, items: [...(cur.items || []), {id:Date.now(), text:'', completed:false, color:'#1E293B'}]}}}); }} className="opacity-0 group-hover:opacity-100 p-0.5 bg-indigo-600 text-white rounded transition-all h-[16px] flex items-center mt-[2px] shrink-0"><Icon name="plus" size={8} /></button>
                                             </div>
-                                            <div className="flex-grow overflow-y-auto custom-scrollbar px-0 space-y-0.5 selectable-text" style={{ overflowX: 'hidden' }}>
+                                            <div className="flex-grow overflow-y-auto custom-scrollbar px-0 space-y-0.5" style={{ overflowX: 'hidden' }}>
                                                 {(dayData.items || []).map(item => (
                                                     <EditableItem key={item.id} id={item.id} className="item-input-dynamic" value={item.text} completed={item.completed} color={item.color} onChange={(updates) => { const ni = (dayData.items || []).map(it => it.id === item.id ? { ...it, ...updates } : it); updateData({ monthlyData: { ...(data.monthlyData || {}), [dStr]: { ...dayData, items: ni } } }); }} onDelete={() => { const ni = (dayData.items || []).filter(it => it.id !== item.id); updateData({ monthlyData: { ...(data.monthlyData || {}), [dStr]: { ...dayData, items: ni } } }); }} />
                                                 ))}
@@ -567,7 +556,7 @@
                                         {!isRoutineEditMode && <button onClick={()=>setConfirmClear('routine')} className="p-0.5 text-slate-300 hover:text-red-500 flex items-center justify-center h-5 w-5"><Icon name="trash-2" size={12} /></button>}
                                     </div>
                                 </header>
-                                <div className="flex-grow overflow-y-auto custom-scrollbar px-1 py-1 selectable-text">
+                                <div className="flex-grow overflow-y-auto custom-scrollbar px-1 py-1">
                                     {isRoutineEditMode ? (
                                         <div className="flex flex-col gap-0.5">
                                             {(data.personalRoutines || []).map((r, idx) => (
@@ -577,7 +566,7 @@
                                     ) : (
                                         <div className="dual-column-grid">
                                             {(data.personalRoutines || []).map((r) => (
-                                                <div key={r.id} className="grid-item-container group relative"><EditableItem id={r.id} className="item-input-dynamic flex-1" value={r.text} completed={r.completed} onChange={(updates) => { const ni = (data.personalRoutines || []).map(it => it.id === r.id ? { ...it, ...updates } : it); updateData({ personalRoutines: ni }); }} onDelete={() => { const ni = (data.personalRoutines || []).filter(it => it.id !== r.id); updateData({ personalRoutines: ni }); }} /></div>
+                                                <div key={r.id} className="grid-item-container group relative"><EditableItem id={r.id} className="item-input-dynamic" value={r.text} completed={r.completed} onChange={(updates) => { const ni = (data.personalRoutines || []).map(it => it.id === r.id ? { ...it, ...updates } : it); updateData({ personalRoutines: ni }); }} onDelete={() => { const ni = (data.personalRoutines || []).filter(it => it.id !== r.id); updateData({ personalRoutines: ni }); }} /></div>
                                             ))}
                                         </div>
                                     )}
@@ -599,7 +588,7 @@
                             <section className="glass-card flex-shrink-0 overflow-hidden h-[125px]" style={{ width: '311px' }}>
                                 {confirmClear === 'checklist' && <div className="confirm-overlay"><p className="text-[11px] font-black text-slate-800 mb-2">전체 삭제하시겠습니까?</p><div className="flex gap-2"><button onClick={()=>{updateData({routines:[]}); setConfirmClear(null);}} className="px-5 py-1.5 bg-red-500 text-white rounded-lg text-[10px] font-black shadow-sm">예</button><button onClick={() => setConfirmClear(null)} className="px-5 py-1.5 bg-slate-200 text-slate-600 rounded-lg text-[10px] font-black">아니오</button></div></div>}
                                 <header className="widget-header"><div className="flex items-center gap-1.5"><Icon name="check-square" className="text-emerald-600" size={12} /><h2 className="font-black text-[14px]">체크리스트</h2></div><div className="flex gap-1"><button onClick={()=>updateData({routines: [...(data.routines || []), {id:Date.now(), text:'', completed:false}]})} className="p-0.5 bg-indigo-600 text-white rounded hover:scale-110 flex items-center justify-center h-5 w-5"><Icon name="plus" size={12} /></button><button onClick={()=>setConfirmClear('checklist')} className="p-0.5 text-slate-300 hover:text-red-500 flex items-center justify-center h-5 w-5"><Icon name="trash-2" size={12} /></button></div></header>
-                                <div className="flex-grow overflow-y-auto custom-scrollbar px-1 space-y-0 selectable-text">
+                                <div className="flex-grow overflow-y-auto custom-scrollbar px-1 space-y-0">
                                     {(data.routines || []).map(r => (<div key={r.id} className="flex items-center group relative min-h-[16px]"><div className="flex-1"><EditableItem id={r.id} className="item-input-dynamic" value={r.text} completed={r.completed} onChange={(updates) => { const ni = (data.routines || []).map(it => it.id === r.id ? { ...it, ...updates } : it); updateData({ routines: ni }); }} onDelete={() => { const ni = (data.routines || []).filter(it => it.id !== r.id); updateData({ routines: ni }); }} /></div></div>))}
                                 </div>
                             </section>
@@ -642,7 +631,7 @@
                             </section>
                             
                             <section className="glass-card flex-shrink-0 overflow-hidden h-[135px]" style={{ width: '270px' }}>
-                                {confirmClear === 'evaluation' && <div className="confirm-overlay"><p className="text-[11px] font-black text-slate-800 mb-2">전체 삭제하시겠습니까?</p><div className="flex gap-2"><button onClick={executeClear} className="px-5 py-1.5 bg-red-500 text-white rounded-lg text-[10px] font-black shadow-sm">예</button><button onClick={() => setConfirmClear(null)} className="px-5 py-1.5 bg-slate-200 text-slate-600 rounded-lg text-[10px] font-black">아니오</button></div></div>}
+                                {confirmClear === 'evaluation' && <div className="confirm-overlay"><p className="text-[11px] font-black text-slate-800 mb-2">전체 삭제하시겠습니까?</p><div className="flex gap-2"><button onClick={executeClear} className="px-5 py-1.5 bg-red-500 text-white rounded-lg text-[10px] font-black shadow-sm hover:bg-red-600">예</button><button onClick={() => setConfirmClear(null)} className="px-5 py-1.5 bg-slate-200 text-slate-600 rounded-lg text-[10px] font-black">아니오</button></div></div>}
                                 <header className="widget-header"><div className="flex items-center gap-1.5"><Icon name="clipboard-list" className="text-purple-600" size={12} /><h2 className="font-black text-[14px]">평가 계획</h2></div><button onClick={()=>setConfirmClear('evaluation')} className="p-0.5 text-slate-300 hover:text-red-500 flex items-center justify-center h-5 w-5"><Icon name="trash-2" size={12} /></button></header>
                                 <textarea className="w-full flex-grow bg-transparent px-2 pt-1 pb-2 text-[13px] font-bold text-slate-600 overflow-y-auto custom-scrollbar focus:bg-white resize-none outline-none selectable-text" value={data.evaluationMemo || ''} onChange={(e)=>updateData({evaluationMemo: e.target.value})} spellCheck={false} placeholder="내용 입력..." />
                             </section>
