@@ -109,7 +109,6 @@
             align-items: flex-start; 
             gap: 6px; 
             min-width: 0; 
-            cursor: grab; 
             overflow: visible !important; 
             min-height: 16.8px; 
         }
@@ -136,7 +135,6 @@
         .calendar-item-row { display: flex; align-items: flex-start; width: 100%; gap: 6px; min-height: 18.8px; position: relative; }
         .delete-btn-box { display: flex; align-items: center; justify-content: center; height: 16.8px; width: 18px; }
 
-        /* 예산 현황 표 스타일 */
         .budget-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 10px; }
         .budget-table th { background: #f8fafc; color: #64748b; font-weight: 900; padding: 4px 2px; border-bottom: 1px solid #e2e8f0; text-align: center; position: sticky; top: 0; z-index: 10; }
         .budget-table td { padding: 4px 2px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; line-height: 1.2; text-align: center; }
@@ -144,7 +142,6 @@
         .budget-amount { font-family: 'Pretendard', monospace; font-weight: 700; color: #64748b; text-align: center; }
         .budget-balance { color: #6366f1; font-weight: 800; text-align: center; }
 
-        /* 디데이 스타일 */
         .dday-badge {
             cursor: pointer;
             background: #6366f1;
@@ -164,14 +161,30 @@
         .dday-field { border: 1px solid #e2e8f0; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 800; outline: none; width: 100%; }
         .dday-field:focus { border-color: #6366f1; }
         
-        /* 링크 항목 스타일 (드래그 지원 추가) */
-        .link-item-row { display: flex; align-items: center; gap: 4px; width: 100%; min-height: 24px; border-bottom: 1px solid #f8fafc; cursor: grab; }
-        .link-item-row:active { cursor: grabbing; }
+        .link-item-row { display: flex; align-items: center; gap: 4px; width: 100%; min-height: 24px; border-bottom: 1px solid #f8fafc; }
         .link-text-btn { text-align: left; font-size: 11px; font-weight: 800; color: #475569; flex: 1; padding: 2px 4px; border-radius: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .link-text-btn:hover { background: #f1f5f9; color: #6366f1; }
         .link-icon-btn { color: #cbd5e1; padding: 2px; border-radius: 4px; }
         .link-icon-btn:hover { color: #6366f1; background: #f1f5f9; }
         .link-icon-btn.active { color: #6366f1; }
+
+        /* [추가] 편집 모드용 큰 카드 스타일 */
+        .edit-card-item {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 8px 12px;
+            margin-bottom: 4px;
+            cursor: grab;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            transition: all 0.2s;
+        }
+        .edit-card-item:active { cursor: grabbing; transform: scale(0.98); box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
+        .drag-handle { color: #cbd5e1; flex-shrink: 0; }
+        .edit-mode-overlay { background: rgba(99, 102, 241, 0.03); }
     </style>
 </head>
 <body>
@@ -263,6 +276,11 @@
             const [budgetData, setBudgetData] = useState({ budgets: [], transactions: [] });
             const [isBudgetLoading, setIsBudgetLoading] = useState(false);
             const [now, setNow] = useState(new Date());
+            
+            // 편집 모드 상태 관리
+            const [isRoutineEditMode, setIsRoutineEditMode] = useState(false);
+            const [isLinkEditMode, setIsLinkEditMode] = useState(false);
+
             useEffect(() => {
                 const timer = setInterval(() => setNow(new Date()), 30000);
                 return () => clearInterval(timer);
@@ -330,7 +348,7 @@
             useEffect(() => {
                 if (isInitialLoading) return;
                 if (data.lastResetDate !== todayStr) {
-                    const resetRoutines = data.personalRoutines.map(r => ({ ...r, completed: false }));
+                    const resetRoutines = (data.personalRoutines || []).map(r => ({ ...r, completed: false }));
                     setData(prev => ({ ...prev, personalRoutines: resetRoutines, lastResetDate: todayStr }));
                 }
             }, [isInitialLoading, todayStr, data.lastResetDate]);
@@ -401,23 +419,26 @@
             const dragItem = useRef(null); const dragOverItem = useRef(null);
             const handleDragStart = (idx) => { dragItem.current = idx; };
             const handleDragEnter = (idx) => { dragOverItem.current = idx; };
-            const handleDragEnd = () => {
-                const copyListItems = [...data.personalRoutines];
+            
+            // 개인 루틴 순서 변경
+            const handleRoutineDragEnd = () => {
+                if (dragItem.current === null || dragOverItem.current === null) return;
+                const copyListItems = [...(data.personalRoutines || [])];
                 const dragItemContent = copyListItems[dragItem.current];
-                copyListItems.splice(dragItem.current, 1); copyListItems.splice(dragOverItem.current, 0, dragItemContent);
+                copyListItems.splice(dragItem.current, 1);
+                copyListItems.splice(dragOverItem.current, 0, dragItemContent);
                 dragItem.current = null; dragOverItem.current = null;
                 updateData({ personalRoutines: copyListItems });
             };
 
-            // 링크 순서 변경 핸들러
+            // 링크 순서 변경
             const handleLinkDragEnd = () => {
                 if (dragItem.current === null || dragOverItem.current === null) return;
                 const copyListItems = [...(data.links || [])];
                 const dragItemContent = copyListItems[dragItem.current];
                 copyListItems.splice(dragItem.current, 1);
                 copyListItems.splice(dragOverItem.current, 0, dragItemContent);
-                dragItem.current = null;
-                dragOverItem.current = null;
+                dragItem.current = null; dragOverItem.current = null;
                 updateData({ links: copyListItems });
             };
 
@@ -468,35 +489,28 @@
                 setActivePalette(null);
             };
 
-            // 링크 추가 함수
             const addLink = () => {
                 const newLink = { id: Date.now(), text: '새 링크', url: '' };
                 updateData({ links: [...(data.links || []), newLink] });
             };
 
-            // 링크 실행 함수
             const openLink = (link) => {
+                if (isLinkEditMode) return; // 편집 모드에선 링크 이동 금지
                 if (link.url) {
                     let url = link.url;
-                    if (!url.startsWith('http://') && !url.startsWith('https://')) {
-                        url = 'https://' + url;
-                    }
+                    if (!url.startsWith('http://') && !url.startsWith('https://')) url = 'https://' + url;
                     window.open(url, '_blank');
-                } else {
-                    handleEditUrl(link);
-                }
+                } else { handleEditUrl(link); }
             };
 
-            // URL 편집 시작
             const handleEditUrl = (link) => {
                 setEditingLinkId(link.id);
                 setTempUrlVal(link.url || '');
                 setIsLinkEditPopOpen(true);
             };
 
-            // URL 저장
             const saveUrl = () => {
-                const nl = data.links.map(l => l.id === editingLinkId ? { ...l, url: tempUrlVal } : l);
+                const nl = (data.links || []).map(l => l.id === editingLinkId ? { ...l, url: tempUrlVal } : l);
                 updateData({ links: nl });
                 setIsLinkEditPopOpen(false);
             };
@@ -555,17 +569,8 @@
                                             <div key={dStr} className={`table-cell group ${isT ? 'today-highlight' : ''}`} style={{ backgroundColor: dayData.bgColor }}>
                                                 <div className="flex items-start mb-0.5 px-0 shrink-0 h-[20px] overflow-visible">
                                                     <div className="flex items-center gap-1 flex-1 min-w-0 h-[20px]">
-                                                        <span className={`text-[12px] font-black h-full flex items-center shrink-0 ${date.getDay()===0?'text-red-500':date.getDay()===6?'text-indigo-500':'text-slate-400'}`}>
-                                                            {date.getDate()}
-                                                        </span>
-                                                        <input 
-                                                            type="text" 
-                                                            value={dayData.holiday || ''} 
-                                                            onChange={(e) => updateData({monthlyData: {...data.monthlyData, [dStr]: {...dayData, holiday: e.target.value}}})} 
-                                                            style={{ color: dayData.bgColor === '#FFF1F2' ? '#ef4444' : '#2563eb' }}
-                                                            className="bg-transparent border-none text-[11px] font-black outline-none w-full h-full p-0 flex items-center leading-none" 
-                                                            spellCheck={false}
-                                                        />
+                                                        <span className={`text-[12px] font-black h-full flex items-center shrink-0 ${date.getDay()===0?'text-red-500':date.getDay()===6?'text-indigo-500':'text-slate-400'}`}>{date.getDate()}</span>
+                                                        <input type="text" value={dayData.holiday || ''} onChange={(e) => updateData({monthlyData: {...data.monthlyData, [dStr]: {...dayData, holiday: e.target.value}}})} style={{ color: dayData.bgColor === '#FFF1F2' ? '#ef4444' : '#2563eb' }} className="bg-transparent border-none text-[11px] font-black outline-none w-full h-full p-0 flex items-center leading-none" spellCheck={false} />
                                                     </div>
                                                     <button onClick={()=>{ const cur = data.monthlyData[dStr] || { items: [] }; updateData({monthlyData: {...data.monthlyData, [dStr]: {...cur, items: [...cur.items, {id:Date.now(), text:'', completed:false, color:'#1E293B'}]}}}); }} className="opacity-0 group-hover:opacity-100 p-0.5 bg-indigo-600 text-white rounded transition-all h-[16px] flex items-center mt-[2px] shrink-0"><Icon name="plus" size={8} /></button>
                                                 </div>
@@ -575,11 +580,7 @@
                                                     ))}
                                                 </div>
                                                 <div className="absolute bottom-1 right-1 opacity-0 group-hover:opacity-100 flex gap-1 bg-white/80 p-1 rounded-lg shadow-sm transition-opacity z-20">
-                                                    {BG_PALETTE.map(p => (
-                                                        <button key={p.name} className="w-3.5 h-3.5 rounded-full border border-slate-200 flex items-center justify-center hover:scale-125 transition-transform" style={{ backgroundColor: p.code }} onClick={() => updateData({monthlyData: {...data.monthlyData, [dStr]: {...dayData, bgColor: p.code}}})}>
-                                                            {p.icon && <Icon name={p.icon} size={8} className="text-slate-400" />}
-                                                        </button>
-                                                    ))}
+                                                    {BG_PALETTE.map(p => (<button key={p.name} className="w-3.5 h-3.5 rounded-full border border-slate-200 flex items-center justify-center hover:scale-125 transition-transform" style={{ backgroundColor: p.code }} onClick={() => updateData({monthlyData: {...data.monthlyData, [dStr]: {...dayData, bgColor: p.code}}})}>{p.icon && <Icon name={p.icon} size={8} className="text-slate-400" />}</button>))}
                                                 </div>
                                             </div>
                                         );
@@ -632,17 +633,36 @@
                                     </div>
                                 </section>
 
-                                <section className="glass-card flex-shrink-0 overflow-hidden h-[125px]" style={{ width: '270px' }}>
-                                    {confirmClear === 'routine' && <div className="confirm-overlay"><p className="text-[11px] font-black text-slate-800 mb-2">전체 삭제하시겠습니까?</p><div className="flex gap-2"><button onClick={executeClear} className="px-5 py-1.5 bg-red-500 text-white rounded-lg text-[10px] font-black shadow-sm hover:bg-red-600">예</button><button onClick={() => setConfirmClear(null)} className="px-5 py-1.5 bg-slate-200 text-slate-600 rounded-lg text-[10px] font-black">아니오</button></div></div>}
-                                    <header className="widget-header"><div className="flex items-center gap-1.5"><Icon name="list-checks" className="text-indigo-600" size={12} /><h2 className="font-black text-[14px]">개인 루틴</h2></div><div className="flex gap-1"><button onClick={()=>updateData({personalRoutines: [...data.personalRoutines, {id:Date.now(), text:'', completed:false}]})} className="p-0.5 bg-indigo-600 text-white rounded hover:scale-110"><Icon name="plus" size={12} /></button><button onClick={()=>setConfirmClear('routine')} className="p-0.5 text-slate-300 hover:text-red-500 transition-colors"><Icon name="trash-2" size={12} /></button></div></header>
-                                    <div className="flex-grow overflow-y-auto custom-scrollbar px-1 py-1 selectable-text">
-                                        <div className="dual-column-grid">
-                                            {data.personalRoutines.map((r, idx) => (
-                                                <div key={r.id} draggable onDragStart={() => handleDragStart(idx)} onDragEnter={() => handleDragEnter(idx)} onDragEnd={handleDragEnd} onDragOver={(e) => e.preventDefault()} className="grid-item-container group relative">
-                                                    <EditableItem id={r.id} className="item-input-dynamic flex-1" value={r.text} completed={r.completed} color={r.color} showPalette={true} gapClass="gap-[6px]" activePaletteId={activePalette?.id} sectionInfo={{ type: 'personalRoutines' }} onRequestPalette={handleRequestPalette} onChange={(updates) => { const ni = data.personalRoutines.map(it => it.id === r.id ? { ...it, ...updates } : it); updateData({ personalRoutines: ni }); }} onDelete={() => { const ni = data.personalRoutines.filter(it => it.id !== r.id); updateData({ personalRoutines: ni }); }} />
-                                                </div>
-                                            ))}
+                                <section className={`glass-card flex-shrink-0 overflow-hidden h-[125px] ${isRoutineEditMode ? 'edit-mode-overlay' : ''}`} style={{ width: '270px' }}>
+                                    <header className="widget-header">
+                                        <div className="flex items-center gap-1.5"><Icon name="list-checks" className="text-indigo-600" size={12} /><h2 className="font-black text-[14px]">개인 루틴</h2></div>
+                                        <div className="flex gap-1">
+                                            {!isRoutineEditMode && <button onClick={()=>updateData({personalRoutines: [...(data.personalRoutines || []), {id:Date.now(), text:'', completed:false}]})} className="p-0.5 bg-indigo-600 text-white rounded hover:scale-110"><Icon name="plus" size={12} /></button>}
+                                            <button onClick={() => setIsRoutineEditMode(!isRoutineEditMode)} className={`p-0.5 rounded transition-colors ${isRoutineEditMode ? 'bg-indigo-600 text-white shadow-inner' : 'text-slate-300 hover:text-indigo-600'}`}>
+                                                <Icon name={isRoutineEditMode ? 'check' : 'settings'} size={12} />
+                                            </button>
+                                            {!isRoutineEditMode && <button onClick={()=>setConfirmClear('routine')} className="p-0.5 text-slate-300 hover:text-red-500 transition-colors"><Icon name="trash-2" size={12} /></button>}
                                         </div>
+                                    </header>
+                                    <div className="flex-grow overflow-y-auto custom-scrollbar px-1 py-1 selectable-text">
+                                        {isRoutineEditMode ? (
+                                            <div className="flex flex-col gap-1">
+                                                {(data.personalRoutines || []).map((r, idx) => (
+                                                    <div key={r.id} draggable onDragStart={() => handleDragStart(idx)} onDragEnter={() => handleDragEnter(idx)} onDragEnd={handleRoutineDragEnd} onDragOver={(e) => e.preventDefault()} className="edit-card-item">
+                                                        <Icon name="grip-vertical" className="drag-handle" size={14} />
+                                                        <span className="text-[11px] font-black text-slate-600 truncate flex-1">{r.text || '(내용 없음)'}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ) : (
+                                            <div className="dual-column-grid">
+                                                {(data.personalRoutines || []).map((r) => (
+                                                    <div key={r.id} className="grid-item-container group relative">
+                                                        <EditableItem id={r.id} className="item-input-dynamic flex-1" value={r.text} completed={r.completed} color={r.color} showPalette={true} gapClass="gap-[6px]" activePaletteId={activePalette?.id} sectionInfo={{ type: 'personalRoutines' }} onRequestPalette={handleRequestPalette} onChange={(updates) => { const ni = data.personalRoutines.map(it => it.id === r.id ? { ...it, ...updates } : it); updateData({ personalRoutines: ni }); }} onDelete={() => { const ni = data.personalRoutines.filter(it => it.id !== r.id); updateData({ personalRoutines: ni }); }} />
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
                                     </div>
                                 </section>
 
@@ -650,84 +670,61 @@
                                     <header className="widget-header"><div className="flex items-center gap-1.5"><Icon name="utensils" className="text-orange-500" size={12} /><h2 className="font-black text-[14px]">오늘의 급식</h2></div><button onClick={() => { setIsSchoolSearchMode(!isSchoolSearchMode); setIsMealLoading(false); }} className={`p-1 ${isSchoolSearchMode ? 'text-indigo-600' : 'text-slate-300 hover:text-indigo-600'}`}><Icon name={isSchoolSearchMode ? 'chevron-left' : 'settings'} size={14} /></button></header>
                                     <div className="flex-grow overflow-y-auto custom-scrollbar px-2 py-1 selectable-text">
                                         {isSchoolSearchMode ? (
-                                            <div className="inline-search-box flex flex-col gap-1">
-                                                <input autoFocus type="text" className="flex-1 text-[10px] font-bold p-1 border rounded" placeholder="학교명 입력 후 엔터" spellCheck={false} onKeyDown={async (e) => { 
-                                                    if(e.key === 'Enter') { 
-                                                        const res = await fetch(`https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=${encodeURIComponent(e.target.value)}`);
-                                                        const d = await res.json();
-                                                        if(d.schoolInfo) updateData({ schoolInfo: { name: d.schoolInfo[1].row[0].SCHUL_NM, officeCode: d.schoolInfo[1].row[0].ATPT_OFCDC_SC_CODE, schoolCode: d.schoolInfo[1].row[0].SD_SCHUL_CODE } });
-                                                        setIsSchoolSearchMode(false);
-                                                    }
-                                                }} />
-                                            </div>
+                                            <div className="inline-search-box flex flex-col gap-1"><input autoFocus type="text" className="flex-1 text-[10px] font-bold p-1 border rounded" placeholder="학교명 입력 후 엔터" spellCheck={false} onKeyDown={async (e) => { if(e.key === 'Enter') { const res = await fetch(`https://open.neis.go.kr/hub/schoolInfo?Type=json&SCHUL_NM=${encodeURIComponent(e.target.value)}`); const d = await res.json(); if(d.schoolInfo) updateData({ schoolInfo: { name: d.schoolInfo[1].row[0].SCHUL_NM, officeCode: d.schoolInfo[1].row[0].ATPT_OFCDC_SC_CODE, schoolCode: d.schoolInfo[1].row[0].SD_SCHUL_CODE } }); setIsSchoolSearchMode(false); } }} /></div>
                                         ) : (
                                             isMealLoading ? (<div className="flex justify-center items-center h-full"><div className="loading-spinner"></div></div>) : 
-                                            data.schoolInfo ? (
-                                                <div className="dual-column-grid">{mealData.map((item, idx) => (<div key={idx} className="meal-item-text truncate" style={{fontSize: '12px', fontWeight: '800', color: '#334155', borderLeft: '2px solid #fdba74', paddingLeft: '4px', lineHeight: '1.2'}} title={item}>{item}</div>))}</div>
-                                            ) : (<div className="flex flex-col items-center justify-center h-full"><button onClick={() => setIsSchoolSearchMode(true)} className="text-[9px] bg-indigo-50 px-3 py-1.5 rounded-xl font-black text-indigo-600">학교 검색</button></div>)
+                                            data.schoolInfo ? (<div className="dual-column-grid">{mealData.map((item, idx) => (<div key={idx} className="meal-item-text truncate" style={{fontSize: '12px', fontWeight: '800', color: '#334155', borderLeft: '2px solid #fdba74', paddingLeft: '4px', lineHeight: '1.2'}} title={item}>{item}</div>))}</div>) : (<div className="flex flex-col items-center justify-center h-full"><button onClick={() => setIsSchoolSearchMode(true)} className="text-[9px] bg-indigo-50 px-3 py-1.5 rounded-xl font-black text-indigo-600">학교 검색</button></div>)
                                         )}
                                     </div>
                                 </section>
 
                                 <section className="glass-card flex-shrink-0 overflow-hidden h-[125px]" style={{ width: '311px' }}>
                                     {confirmClear === 'checklist' && <div className="confirm-overlay"><p className="text-[11px] font-black text-slate-800 mb-2">전체 삭제하시겠습니까?</p><div className="flex gap-2"><button onClick={()=>{updateData({routines:[]}); setConfirmClear(null);}} className="px-5 py-1.5 bg-red-500 text-white rounded-lg text-[10px] font-black shadow-sm hover:bg-red-600">예</button><button onClick={() => setConfirmClear(null)} className="px-5 py-1.5 bg-slate-200 text-slate-600 rounded-lg text-[10px] font-black">아니오</button></div></div>}
-                                    <header className="widget-header"><div className="flex items-center gap-1.5"><Icon name="check-square" className="text-emerald-600" size={12} /><h2 className="font-black text-[14px]">체크리스트</h2></div><div className="flex gap-1"><button onClick={()=>updateData({routines: [...data.routines, {id:Date.now(), text:'', completed:false}]})} className="p-0.5 bg-indigo-600 text-white rounded hover:scale-110"><Icon name="plus" size={12} /></button><button onClick={()=>setConfirmClear('checklist')} className="p-0.5 text-slate-300 hover:text-red-500 transition-colors"><Icon name="trash-2" size={12} /></button></div></header>
+                                    <header className="widget-header"><div className="flex items-center gap-1.5"><Icon name="check-square" className="text-emerald-600" size={12} /><h2 className="font-black text-[14px]">체크리스트</h2></div><div className="flex gap-1"><button onClick={()=>updateData({routines: [...(data.routines || []), {id:Date.now(), text:'', completed:false}]})} className="p-0.5 bg-indigo-600 text-white rounded hover:scale-110"><Icon name="plus" size={12} /></button><button onClick={()=>setConfirmClear('checklist')} className="p-0.5 text-slate-300 hover:text-red-500 transition-colors"><Icon name="trash-2" size={12} /></button></div></header>
                                     <div className="flex-grow overflow-y-auto custom-scrollbar px-1 space-y-0 selectable-text">
-                                        {data.routines.map(r => (
-                                            <div key={r.id} className="flex items-center group relative min-h-[16px]">
-                                                <div className="flex-1">
-                                                    <EditableItem id={r.id} className="item-input-dynamic" value={r.text} completed={r.completed} color={r.color} showPalette={true} gapClass="gap-1.5" activePaletteId={activePalette?.id} sectionInfo={{ type: 'routines' }} onRequestPalette={handleRequestPalette} onChange={(updates) => { const ni = data.routines.map(it => it.id === r.id ? { ...it, ...updates } : it); updateData({ routines: ni }); }} onDelete={() => { const ni = data.routines.filter(it => it.id !== r.id); updateData({ routines: ni }); }} />
-                                                </div>
-                                            </div>
-                                        ))}
+                                        {(data.routines || []).map(r => (<div key={r.id} className="flex items-center group relative min-h-[16px]"><div className="flex-1"><EditableItem id={r.id} className="item-input-dynamic" value={r.text} completed={r.completed} color={r.color} showPalette={true} gapClass="gap-1.5" activePaletteId={activePalette?.id} sectionInfo={{ type: 'routines' }} onRequestPalette={handleRequestPalette} onChange={(updates) => { const ni = data.routines.map(it => it.id === r.id ? { ...it, ...updates } : it); updateData({ routines: ni }); }} onDelete={() => { const ni = data.routines.filter(it => it.id !== r.id); updateData({ routines: ni }); }} /></div></div>))}
                                     </div>
                                 </section>
                             </div>
 
                             <div className="flex gap-[0.5rem] w-full items-stretch">
-                                <section className="glass-card flex-shrink-0 overflow-hidden h-[135px]" style={{ width: '175px' }}>
+                                <section className={`glass-card flex-shrink-0 overflow-hidden h-[135px] ${isLinkEditMode ? 'edit-mode-overlay' : ''}`} style={{ width: '175px' }}>
                                     <header className="widget-header">
                                         <div className="flex items-center gap-1.5"><Icon name="link" className="text-indigo-500" size={12} /><h2 className="font-black text-[14px]">링크</h2></div>
-                                        <button onClick={addLink} className="p-0.5 bg-indigo-600 text-white rounded hover:scale-110"><Icon name="plus" size={12} /></button>
+                                        <div className="flex gap-1">
+                                            {!isLinkEditMode && <button onClick={addLink} className="p-0.5 bg-indigo-600 text-white rounded hover:scale-110"><Icon name="plus" size={12} /></button>}
+                                            <button onClick={() => setIsLinkEditMode(!isLinkEditMode)} className={`p-0.5 rounded transition-colors ${isLinkEditMode ? 'bg-indigo-600 text-white shadow-inner' : 'text-slate-300 hover:text-indigo-600'}`}>
+                                                <Icon name={isLinkEditMode ? 'check' : 'settings'} size={12} />
+                                            </button>
+                                        </div>
                                     </header>
                                     <div className="flex-grow overflow-y-auto custom-scrollbar px-1 py-1 selectable-text">
-                                        {(data.links || []).map((link, idx) => (
-                                            <div key={link.id} 
-                                                draggable 
-                                                onDragStart={() => handleDragStart(idx)} 
-                                                onDragEnter={() => handleDragEnter(idx)} 
-                                                onDragEnd={handleLinkDragEnd} 
-                                                onDragOver={(e) => e.preventDefault()} 
-                                                className="link-item-row group relative"
-                                            >
-                                                <button onClick={() => openLink(link)} className="link-text-btn">
-                                                    {link.text}
-                                                </button>
-                                                <div className="flex gap-0.5">
-                                                    <button onClick={() => handleEditUrl(link)} className={`link-icon-btn ${link.url ? 'active' : ''}`} title="URL 설정">
-                                                        <Icon name="link-2" size={10} />
-                                                    </button>
-                                                    <button onClick={() => { const nl = data.links.filter(l => l.id !== link.id); updateData({ links: nl }); }} className="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 p-0.5">
-                                                        <Icon name="x" size={10} />
-                                                    </button>
-                                                </div>
+                                        {isLinkEditMode ? (
+                                            <div className="flex flex-col gap-1">
+                                                {(data.links || []).map((link, idx) => (
+                                                    <div key={link.id} draggable onDragStart={() => handleDragStart(idx)} onDragEnter={() => handleDragEnter(idx)} onDragEnd={handleLinkDragEnd} onDragOver={(e) => e.preventDefault()} className="edit-card-item">
+                                                        <Icon name="grip-vertical" className="drag-handle" size={14} />
+                                                        <span className="text-[11px] font-black text-slate-600 truncate flex-1">{link.text}</span>
+                                                        <button onClick={(e) => { e.stopPropagation(); const nl = data.links.filter(l => l.id !== link.id); updateData({ links: nl }); }} className="text-red-400 p-1"><Icon name="x" size={12} /></button>
+                                                    </div>
+                                                ))}
                                             </div>
-                                        ))}
-                                        {/* URL 입력 팝업 */}
+                                        ) : (
+                                            (data.links || []).map((link) => (
+                                                <div key={link.id} className="link-item-row group relative">
+                                                    <button onClick={() => openLink(link)} className="link-text-btn">{link.text}</button>
+                                                    <div className="flex gap-0.5">
+                                                        <button onClick={() => handleEditUrl(link)} className={`link-icon-btn ${link.url ? 'active' : ''}`} title="URL 설정"><Icon name="link-2" size={10} /></button>
+                                                        <button onClick={() => { const nl = data.links.filter(l => l.id !== link.id); updateData({ links: nl }); }} className="text-slate-300 hover:text-red-500 opacity-0 group-hover:opacity-100 p-0.5"><Icon name="x" size={10} /></button>
+                                                    </div>
+                                                </div>
+                                            ))
+                                        )}
                                         {isLinkEditPopOpen && (
                                             <div ref={linkPopRef} className="popover-base left-2 top-8 w-[160px]">
                                                 <div className="flex flex-col gap-2">
-                                                    <div className="flex flex-col gap-1">
-                                                        <label className="text-[9px] font-black text-slate-400">제목 수정</label>
-                                                        <input type="text" className="dday-field" value={data.links.find(l=>l.id===editingLinkId)?.text} onChange={(e) => {
-                                                            const nl = data.links.map(l => l.id === editingLinkId ? {...l, text: e.target.value} : l);
-                                                            updateData({links: nl});
-                                                        }} spellCheck={false} />
-                                                    </div>
-                                                    <div className="flex flex-col gap-1">
-                                                        <label className="text-[9px] font-black text-slate-400">URL 입력</label>
-                                                        <input autoFocus type="text" className="dday-field" placeholder="https://..." value={tempUrlVal} onChange={(e) => setTempUrlVal(e.target.value)} spellCheck={false} />
-                                                    </div>
+                                                    <div className="flex flex-col gap-1"><label className="text-[9px] font-black text-slate-400">제목 수정</label><input type="text" className="dday-field" value={data.links.find(l=>l.id===editingLinkId)?.text} onChange={(e) => { const nl = data.links.map(l => l.id === editingLinkId ? {...l, text: e.target.value} : l); updateData({links: nl}); }} spellCheck={false} /></div>
+                                                    <div className="flex flex-col gap-1"><label className="text-[9px] font-black text-slate-400">URL 입력</label><input autoFocus type="text" className="dday-field" placeholder="https://..." value={tempUrlVal} onChange={(e) => setTempUrlVal(e.target.value)} spellCheck={false} /></div>
                                                     <button onClick={saveUrl} className="bg-indigo-600 text-white text-[10px] font-black py-1.5 rounded-md">확인</button>
                                                 </div>
                                             </div>
@@ -737,26 +734,13 @@
                                 
                                 <section className="glass-card flex-shrink-0 overflow-hidden h-[135px]" style={{ width: '270px' }}>
                                     {confirmClear === 'evaluation' && <div className="confirm-overlay"><p className="text-[11px] font-black text-slate-800 mb-2">전체 삭제하시겠습니까?</p><div className="flex gap-2"><button onClick={executeClear} className="px-5 py-1.5 bg-red-500 text-white rounded-lg text-[10px] font-black shadow-sm hover:bg-red-600">예</button><button onClick={() => setConfirmClear(null)} className="px-5 py-1.5 bg-slate-200 text-slate-600 rounded-lg text-[10px] font-black">아니오</button></div></div>}
-                                    <header className="widget-header">
-                                        <div className="flex items-center gap-1.5"><Icon name="clipboard-list" className="text-purple-600" size={12} /><h2 className="font-black text-[14px]">평가 계획</h2></div>
-                                        <button onClick={()=>setConfirmClear('evaluation')} className="p-0.5 text-slate-300 hover:text-red-500 transition-colors"><Icon name="trash-2" size={12} /></button>
-                                    </header>
+                                    <header className="widget-header"><div className="flex items-center gap-1.5"><Icon name="clipboard-list" className="text-purple-600" size={12} /><h2 className="font-black text-[14px]">평가 계획</h2></div><button onClick={()=>setConfirmClear('evaluation')} className="p-0.5 text-slate-300 hover:text-red-500 transition-colors"><Icon name="trash-2" size={12} /></button></header>
                                     <textarea className="w-full flex-grow bg-transparent px-2 pt-1 pb-2 text-[13px] font-bold text-slate-600 overflow-y-auto custom-scrollbar focus:bg-white resize-none selectable-text outline-none" value={data.evaluationMemo} onChange={(e)=>updateData({evaluationMemo: e.target.value})} spellCheck={false} placeholder="내용을 입력하세요." />
                                 </section>
 
                                 <section className="glass-card flex-shrink-0 overflow-hidden h-[135px]" style={{ width: '260px' }}>
-                                    <header className="widget-header">
-                                        <div className="flex items-center gap-1.5"><Icon name="wallet" className="text-blue-500" size={12} /><h2 className="font-black text-[14px]">예산 현황</h2></div>
-                                        <div className="flex items-center gap-1">{isBudgetLoading && <div className="loading-spinner"></div>}<button onClick={fetchBudgetData} title="새로고침" className="p-0.5 text-slate-300 hover:text-blue-500 transition-colors"><Icon name="rotate-cw" size={12} /></button><a href={BUDGET_SITE_URL} target="_blank" rel="noopener noreferrer" title="지출 내역 작성" className="p-0.5 text-slate-300 hover:text-blue-500 transition-colors"><Icon name="external-link" size={12} /></a></div>
-                                    </header>
-                                    <div className="flex-grow overflow-y-auto custom-scrollbar">
-                                        <table className="budget-table"><thead><tr><th>예산명</th><th>사용금액</th><th>잔액</th></tr></thead><tbody>
-                                            {budgetData.budgets.map(b => {
-                                                const used = budgetData.transactions.filter(t => t.budgetId === b.id).reduce((acc, curr) => acc + (curr.amount || 0), 0);
-                                                return (<tr key={b.id}><td className="budget-name">{b.name}</td><td className="budget-amount">{formatKRW(used)}</td><td className="budget-balance">{formatKRW((b.plannedAmount || 0) - used)}</td></tr>);
-                                            })}
-                                        </tbody></table>
-                                    </div>
+                                    <header className="widget-header"><div className="flex items-center gap-1.5"><Icon name="wallet" className="text-blue-500" size={12} /><h2 className="font-black text-[14px]">예산 현황</h2></div><div className="flex items-center gap-1">{isBudgetLoading && <div className="loading-spinner"></div>}<button onClick={fetchBudgetData} title="새로고침" className="p-0.5 text-slate-300 hover:text-blue-500 transition-colors"><Icon name="rotate-cw" size={12} /></button><a href={BUDGET_SITE_URL} target="_blank" rel="noopener noreferrer" title="지출 내역 작성" className="p-0.5 text-slate-300 hover:text-blue-500 transition-colors"><Icon name="external-link" size={12} /></a></div></header>
+                                    <div className="flex-grow overflow-y-auto custom-scrollbar"><table className="budget-table"><thead><tr><th>예산명</th><th>사용금액</th><th>잔액</th></tr></thead><tbody>{budgetData.budgets.map(b => { const used = budgetData.transactions.filter(t => t.budgetId === b.id).reduce((acc, curr) => acc + (curr.amount || 0), 0); return (<tr key={b.id}><td className="budget-name">{b.name}</td><td className="budget-amount">{formatKRW(used)}</td><td className="budget-balance">{formatKRW((b.plannedAmount || 0) - used)}</td></tr>); })}</tbody></table></div>
                                 </section>
 
                                 <section className="glass-card flex-shrink-0 overflow-hidden h-[135px] relative" style={{ width: '311px' }}>
