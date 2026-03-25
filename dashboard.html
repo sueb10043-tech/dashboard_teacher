@@ -335,11 +335,11 @@
                 if (!GAS_URL) return;
                 setIsSyncing(true);
                 try {
-                    // [수정] range 파라미터 대응 및 파싱 로직 보강
+                    // [수정] 수정한 GAS 규격 (?sheet=...&range=A1)에 맞춰 호출
                     const res = await fetch(`${GAS_URL}?sheet=${encodeURIComponent(DASHBOARD_SHEET)}&range=A1`);
                     const result = await res.json();
                     
-                    // GAS doGet 로직에 따라 값이 문자열로 올 수 있음
+                    // GAS doGet이 데이터를 반환할 때 단일 셀은 값(string)만 보낼 수 있음
                     let cloudData = result;
                     if (typeof result === 'string' && result.trim() !== '') {
                         try { cloudData = JSON.parse(result); } catch(e) { cloudData = {}; }
@@ -349,16 +349,20 @@
                         setData(prev => ({...prev, ...cloudData}));
                     }
                 } catch (e) {
-                    console.error("데이터 로드 실패:", e);
+                    console.error("불러오기 실패:", e);
                 } finally { setIsInitialLoading(false); setIsSyncing(false); }
             }, []);
 
             const fetchBudgetData = useCallback(async () => {
                 setIsBudgetLoading(true);
                 try {
-                    const res = await fetch(`${GAS_URL}?sheet=${encodeURIComponent(BUDGET_SHEET)}`);
+                    const res = await fetch(`${GAS_URL}?sheet=${encodeURIComponent(BUDGET_SHEET)}&range=A1:Z100`);
                     const result = await res.json();
-                    const parsed = typeof result === 'string' ? JSON.parse(result) : result;
+                    // GAS doGet 결과가 2차원 배열 문자열인 경우 파싱
+                    let parsed = result;
+                    if (typeof result === 'string') {
+                        try { parsed = JSON.parse(result); } catch(e) { parsed = result; }
+                    }
                     if (parsed && parsed.budgets) setBudgetData(parsed);
                 } catch (e) {} finally { setIsBudgetLoading(false); }
             }, []);
@@ -367,18 +371,19 @@
                 if (isInitialLoading || !GAS_URL) return;
                 setIsSyncing(true);
                 try {
-                    // [수정] 수정된 GAS doPost 규격 { data: ..., range: ... } 에 맞게 수정
+                    // [핵심 수정] 수정한 GAS doPost 규격 { data: "내용", range: "A1" } 에 맞춰 데이터 래핑
                     const payload = {
                         data: JSON.stringify(currentData),
                         range: "A1"
                     };
+                    
                     await fetch(`${GAS_URL}?sheet=${encodeURIComponent(DASHBOARD_SHEET)}`, { 
                         method: 'POST', 
                         mode: 'no-cors', 
                         body: JSON.stringify(payload) 
                     });
                 } catch (e) {
-                    console.error("데이터 저장 실패:", e);
+                    console.error("저장 실패:", e);
                 } finally { setTimeout(() => setIsSyncing(false), 800); }
             }, [isInitialLoading]);
 
@@ -754,10 +759,7 @@
                                         ) : (
                                             (data.links || []).map((link) => (
                                                 <div key={link.id} className="link-item-row group relative">
-                                                    <button 
-                                                        onClick={() => openLink(link)} 
-                                                        className={`link-text-btn ${!link.url ? 'cursor-default hover:bg-transparent' : 'cursor-pointer'}`}
-                                                    >
+                                                    <button onClick={() => openLink(link)} className={`link-text-btn ${!link.url ? 'cursor-default hover:bg-transparent' : 'cursor-pointer'}`}>
                                                         {link.text}
                                                     </button>
                                                     <div className="flex gap-0.5">
