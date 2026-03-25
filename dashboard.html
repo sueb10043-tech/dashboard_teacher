@@ -136,6 +136,7 @@
         .calendar-item-row { display: flex; align-items: flex-start; width: 100%; gap: 6px; min-height: 18.8px; position: relative; }
         .delete-btn-box { display: flex; align-items: center; justify-content: center; height: 16.8px; width: 18px; }
 
+        /* 예산 현황 표 스타일 */
         .budget-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 10px; }
         .budget-table th { background: #f8fafc; color: #64748b; font-weight: 900; padding: 4px 2px; border-bottom: 1px solid #e2e8f0; text-align: center; position: sticky; top: 0; z-index: 10; }
         .budget-table td { padding: 4px 2px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; line-height: 1.2; text-align: center; }
@@ -143,6 +144,7 @@
         .budget-amount { font-family: 'Pretendard', monospace; font-weight: 700; color: #64748b; text-align: center; }
         .budget-balance { color: #6366f1; font-weight: 800; text-align: center; }
 
+        /* 디데이 스타일 */
         .dday-badge {
             cursor: pointer;
             background: #6366f1;
@@ -162,7 +164,9 @@
         .dday-field { border: 1px solid #e2e8f0; padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 800; outline: none; width: 100%; }
         .dday-field:focus { border-color: #6366f1; }
         
-        .link-item-row { display: flex; align-items: center; gap: 4px; width: 100%; min-height: 24px; border-bottom: 1px solid #f8fafc; }
+        /* 링크 항목 스타일 (드래그 지원 추가) */
+        .link-item-row { display: flex; align-items: center; gap: 4px; width: 100%; min-height: 24px; border-bottom: 1px solid #f8fafc; cursor: grab; }
+        .link-item-row:active { cursor: grabbing; }
         .link-text-btn { text-align: left; font-size: 11px; font-weight: 800; color: #475569; flex: 1; padding: 2px 4px; border-radius: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .link-text-btn:hover { background: #f1f5f9; color: #6366f1; }
         .link-icon-btn { color: #cbd5e1; padding: 2px; border-radius: 4px; }
@@ -403,6 +407,18 @@
                 copyListItems.splice(dragItem.current, 1); copyListItems.splice(dragOverItem.current, 0, dragItemContent);
                 dragItem.current = null; dragOverItem.current = null;
                 updateData({ personalRoutines: copyListItems });
+            };
+
+            // 링크 순서 변경 핸들러
+            const handleLinkDragEnd = () => {
+                if (dragItem.current === null || dragOverItem.current === null) return;
+                const copyListItems = [...(data.links || [])];
+                const dragItemContent = copyListItems[dragItem.current];
+                copyListItems.splice(dragItem.current, 1);
+                copyListItems.splice(dragOverItem.current, 0, dragItemContent);
+                dragItem.current = null;
+                dragOverItem.current = null;
+                updateData({ links: copyListItems });
             };
 
             const dDayValue = useMemo(() => {
@@ -675,8 +691,15 @@
                                         <button onClick={addLink} className="p-0.5 bg-indigo-600 text-white rounded hover:scale-110"><Icon name="plus" size={12} /></button>
                                     </header>
                                     <div className="flex-grow overflow-y-auto custom-scrollbar px-1 py-1 selectable-text">
-                                        {(data.links || []).map(link => (
-                                            <div key={link.id} className="link-item-row group relative">
+                                        {(data.links || []).map((link, idx) => (
+                                            <div key={link.id} 
+                                                draggable 
+                                                onDragStart={() => handleDragStart(idx)} 
+                                                onDragEnter={() => handleDragEnter(idx)} 
+                                                onDragEnd={handleLinkDragEnd} 
+                                                onDragOver={(e) => e.preventDefault()} 
+                                                className="link-item-row group relative"
+                                            >
                                                 <button onClick={() => openLink(link)} className="link-text-btn">
                                                     {link.text}
                                                 </button>
