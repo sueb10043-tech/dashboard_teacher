@@ -72,11 +72,13 @@
             border: none !important; background: transparent !important; flex: 1 !important; 
             width: 0; font-size: 12px; font-weight: bold; padding: 0 !important; margin: 0 !important; 
             resize: none !important; 
-            display: block; overflow: hidden; word-break: break-all; white-space: pre-wrap; height: auto; 
+            display: block; overflow: hidden; word-break: break-all; white-space: pre-wrap; height: auto;
+            vertical-align: top;
         }
         .strikethrough-line { text-decoration: line-through !important; text-decoration-color: #475569 !important; text-decoration-thickness: 1.5px !important; color: #94a3b8 !important; }
         
-        .checkbox-container { width: 16px; height: 16.8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
+        /* [중요] 체크박스 컨테이너: 상단 마진을 부여하여 텍스트의 첫 줄 중앙과 수평 정렬 */
+        .checkbox-container { width: 16px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px; }
         .compact-checkbox { width: 13px !important; height: 13px !important; accent-color: #4f46e5; cursor: pointer; margin: 0 !important; padding: 0 !important; }
         
         .popover-base { position: absolute; background: white !important; border: 1px solid #e2e8f0; border-radius: 1rem; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15); z-index: 9999; padding: 10px; animation: popFade 0.12s ease-out; }
@@ -87,7 +89,8 @@
         .pillar-container { display: flex; width: 100%; gap: 8px; align-items: flex-start; }
         .pillar { flex: 1; display: flex; flex-direction: column; gap: 0px; }
         
-        .grid-item-container { background: transparent; border-radius: 0; padding: 0; display: flex; align-items: flex-start; gap: 4px; min-width: 0; overflow: visible !important; min-height: 16.8px; }
+        /* [수정] 그리드 아이템 컨테이너: items-start로 변경하여 긴 텍스트 대응 */
+        .grid-item-container { background: transparent; border-radius: 0; padding: 0; display: flex; align-items: flex-start; gap: 4px; min-width: 0; overflow: visible !important; }
         
         .sync-indicator { font-size: 10px; font-weight: 900; color: #6366f1; display: flex; align-items: center; gap: 4px; background: rgba(99, 102, 241, 0.1); padding: 2px 8px; border-radius: 9999px; }
         .loading-spinner { border: 2px solid #f3f3f3; border-top: 2px solid #6366f1; border-radius: 50%; width: 10px; height: 10px; animation: spin 1s linear infinite; display: inline-block; }
@@ -119,7 +122,8 @@
         .drag-handle-slim { color: #cbd5e1; flex-shrink: 0; }
         .edit-mode-highlight { background: rgba(99, 102, 241, 0.05); }
 
-        .calendar-item-row { display: flex !important; flex-direction: row !important; align-items: flex-start !important; width: 100%; gap: 6px; min-height: 18.8px; position: relative; }
+        /* [핵심] 수평 정렬을 보장하는 항목 행 스타일 */
+        .calendar-item-row { display: flex !important; flex-direction: row !important; align-items: flex-start !important; width: 100%; gap: 6px; position: relative; }
         
         .water-bar-custom { height: 6px; }
         .water-calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
@@ -190,17 +194,18 @@
                 <div className={`flex flex-col w-full group/item relative ${marginBottom}`}>
                     <div className={`calendar-item-row relative ${gapClass}`} style={{ minHeight: minHeight }}>
                         {!hideCheckbox && (
-                            <div className="checkbox-container" style={{ height: minHeight !== '0' ? '16.8px' : 'auto', minHeight: minHeight }}>
+                            /* [해결] 체크박스 컨테이너 상단 정렬 최적화 */
+                            <div className="checkbox-container">
                                 <input type="checkbox" checked={!!completed} onChange={(e) => onChange({completed: e.target.checked})} className="compact-checkbox" />
                             </div>
                         )}
                         <textarea ref={textareaRef} rows={1} onMouseDown={(e) => { e.stopPropagation(); if (textareaRef.current) textareaRef.current.focus(); }}
                             spellCheck={false}
                             className={`${className} outline-none overflow-hidden resize-none ${completed ? 'strikethrough-line' : ''}`} 
-                            style={{ color: completed ? '' : '#1E293B', fontSize: '12px', padding: '0', lineHeight: lineHeight }} 
+                            style={{ color: completed ? '' : '#1E293B', fontSize: '12px', padding: '0', lineHeight: lineHeight, marginTop: '2px' }} 
                             value={value} onChange={(e) => onChange({text: e.target.value})} onInput={adjustHeight} />
-                        <div className="delete-btn-box shrink-0">
-                            <button onClick={(e) => { e.stopPropagation(); onDelete(); }} className="text-slate-300 hover:text-red-500 opacity-0 group-hover/item:opacity-100 px-1 shrink-0 transition-opacity flex items-center justify-center h-full"><Icon name="x" size={11} /></button>
+                        <div className="delete-btn-box shrink-0 flex items-start pt-[3px]">
+                            <button onClick={(e) => { e.stopPropagation(); onDelete(); }} className="text-slate-300 hover:text-red-500 opacity-0 group-hover/item:opacity-100 px-1 shrink-0 transition-opacity flex items-center justify-center"><Icon name="x" size={11} /></button>
                         </div>
                     </div>
                 </div>
@@ -437,12 +442,17 @@
                                     const dStr = getLocalDateString(date);
                                     const isT = dStr === todayStr; 
                                     const dayData = (data.monthlyData || {})[dStr] || { holiday:'', items:[], bgColor: '#FFFFFF' };
+                                    
+                                    /* [수정] 배경색이 빨간색(분홍색)인 경우 날짜 색도 빨간색으로 변경 */
+                                    const isHolidayBg = dayData.bgColor === '#FFF1F2';
+                                    const dateColorClass = (date.getDay() === 0 || isHolidayBg) ? 'text-red-500' : date.getDay() === 6 ? 'text-indigo-500' : 'text-slate-400';
+
                                     return (
                                         <div key={dStr} className={`table-cell group ${isT ? 'today-highlight' : ''}`} style={{ backgroundColor: dayData.bgColor }}>
                                             <div className="flex items-start mb-0.5 px-0 shrink-0 h-[20px] overflow-visible">
                                                 <div className="flex items-center gap-1 flex-1 min-w-0 h-[20px]">
-                                                    <span className={`text-[12px] font-black h-full flex items-center shrink-0 ${date.getDay()===0?'text-red-500':date.getDay()===6?'text-indigo-500':'text-slate-400'}`}>{date.getDate()}</span>
-                                                    <input type="text" value={dayData.holiday || ''} onChange={(e) => updateData({monthlyData: {...(data.monthlyData || {}), [dStr]: {...dayData, holiday: e.target.value}}})} style={{ color: dayData.bgColor === '#FFF1F2' ? '#ef4444' : '#2563eb' }} className="bg-transparent border-none text-[11px] font-black outline-none w-full h-full p-0 flex items-center leading-none" spellCheck={false} />
+                                                    <span className={`text-[12px] font-black h-full flex items-center shrink-0 ${dateColorClass}`}>{date.getDate()}</span>
+                                                    <input type="text" value={dayData.holiday || ''} onChange={(e) => updateData({monthlyData: {...(data.monthlyData || {}), [dStr]: {...dayData, holiday: e.target.value}}})} style={{ color: isHolidayBg ? '#ef4444' : '#2563eb' }} className="bg-transparent border-none text-[11px] font-black outline-none w-full h-full p-0 flex items-center leading-none" spellCheck={false} />
                                                 </div>
                                                 <button onClick={()=>{ const cur = (data.monthlyData || {})[dStr] || { items: [] }; updateData({monthlyData: {...(data.monthlyData || {}), [dStr]: {...cur, items: [...(cur.items || []), {id:Date.now(), text:'', completed:false}]}}}); }} className="opacity-0 group-hover:opacity-100 p-0.5 bg-indigo-600 text-white rounded transition-all h-[16px] flex items-center mt-[2px] shrink-0"><Icon name="plus" size={8} /></button>
                                             </div>
@@ -463,7 +473,6 @@
 
                     <div className="remainder-section">
                         <div className="widget-grid-row">
-                            {/* [수정] z-index 로직 강화: 팝업이 열려 있을 때 이 카드가 최상단으로 옴 */}
                             <section className={`glass-card h-[125px] overflow-visible transition-all ${isWaterHistoryOpen || isAddWaterPopOpen || isGoalEditPopOpen ? 'z-[60]' : 'z-10'}`}>
                                 <header className="widget-header">
                                     <div className="flex items-center gap-1.5"><Icon name="droplets" className="text-blue-600" size={12} /><h2 className="font-black text-[14px]">수분 섭취</h2></div>
@@ -506,11 +515,8 @@
                                     <div className="flex gap-1 w-full px-0.5 relative">
                                         <button onClick={()=>addWater(250)} className="flex-1 bg-blue-50 text-blue-600 h-6 rounded text-[10px] font-black active:scale-95 transition-transform hover:bg-blue-100">+250</button>
                                         <button onClick={()=>addWater(500)} className="flex-1 bg-blue-600 text-white h-6 rounded text-[10px] font-black shadow-sm active:scale-95 transition-transform hover:bg-blue-700">+500</button>
-                                        
                                         <button onClick={(e) => { e.stopPropagation(); setTempAddVal(''); setIsAddWaterPopOpen(!isAddWaterPopOpen); }} className="w-6 h-6 bg-blue-100 text-blue-600 rounded flex items-center justify-center active:scale-95 transition-transform hover:bg-blue-200"><Icon name="plus" size={12} /></button>
-                                        
                                         <button onClick={undoWater} disabled={!waterLogs || waterLogs.length === 0} className={`w-6 h-6 rounded flex items-center justify-center transition-all ${!waterLogs || waterLogs.length === 0 ? 'text-slate-200 cursor-not-allowed' : 'bg-orange-50 text-orange-600 active:scale-95 hover:bg-orange-100'}`}><Icon name="rotate-ccw" size={12} /></button>
-
                                         {isAddWaterPopOpen && (
                                             <div ref={addPopRef} className="popover-base bottom-full right-0 mb-2 z-[9999] flex gap-1 shadow-lg border border-indigo-100">
                                                 <input autoFocus type="number" placeholder="ml" value={tempAddVal} onChange={e=>setTempAddVal(e.target.value)} className="w-16 h-6 text-[10px] font-black border rounded px-1 outline-none" />
@@ -521,6 +527,7 @@
                                 </div>
                             </section>
 
+                            {/* 개인 루틴 및 체크리스트의 정렬 문제는 EditableItem 내부의 checkbox-container 마진과 textarea padding 제거로 해결됨 */}
                             <section key={`routine-section-${isRoutineEditMode}`} className={`glass-card h-[125px] overflow-hidden ${isRoutineEditMode ? 'edit-mode-highlight' : ''}`}>
                                 <header className="widget-header">
                                     <div className="flex items-center gap-1.5"><Icon name="list-checks" className="text-indigo-600" size={12} /><h2 className="font-black text-[14px]">개인 루틴</h2></div>
