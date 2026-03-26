@@ -68,7 +68,13 @@
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 10px; }
         
-        .item-input-dynamic { border: none !important; background: transparent !important; flex: 1 !important; width: 0; font-size: 12px; font-weight: bold; padding: 0 !important; margin: 0 !important; resize: none !important; line-height: 1.4 !important; display: block; overflow: hidden; word-break: break-all; white-space: pre-wrap; height: auto; }
+        .item-input-dynamic { 
+            border: none !important; background: transparent !important; flex: 1 !important; 
+            width: 0; font-size: 12px; font-weight: bold; padding: 0 !important; margin: 0 !important; 
+            resize: none !important; 
+            /* [해결] 기존 고정값 삭제하여 리액트 prop이 정상 작동하도록 수정 */
+            display: block; overflow: hidden; word-break: break-all; white-space: pre-wrap; height: auto; 
+        }
         .strikethrough-line { text-decoration: line-through !important; text-decoration-color: #475569 !important; text-decoration-thickness: 1.5px !important; color: #94a3b8 !important; }
         
         .checkbox-container { width: 16px; height: 16.8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px; }
@@ -171,7 +177,7 @@
 
         const formatKRW = (val) => (val || 0).toLocaleString('ko-KR');
 
-        const EditableItem = memo(({ id, value, completed, onChange, onDelete, className, hideCheckbox = false, gapClass = "gap-1.5", marginBottom = "mb-[1.5px]" }) => {
+        const EditableItem = memo(({ id, value, completed, onChange, onDelete, className, hideCheckbox = false, gapClass = "gap-1.5", marginBottom = "mb-[1.5px]", lineHeight = "1.4", minHeight = "18.8px" }) => {
             const textareaRef = useRef(null);
             const adjustHeight = useCallback(() => { 
                 const el = textareaRef.current;
@@ -183,16 +189,16 @@
             useLayoutEffect(() => { adjustHeight(); }, [value, adjustHeight]);
             return (
                 <div className={`flex flex-col w-full group/item relative ${marginBottom}`}>
-                    <div className={`calendar-item-row relative ${gapClass}`}>
+                    <div className={`calendar-item-row relative ${gapClass}`} style={{ minHeight: minHeight }}>
                         {!hideCheckbox && (
-                            <div className="checkbox-container">
+                            <div className="checkbox-container" style={{ height: minHeight !== '0' ? '16.8px' : 'auto', minHeight: minHeight }}>
                                 <input type="checkbox" checked={!!completed} onChange={(e) => onChange({completed: e.target.checked})} className="compact-checkbox" />
                             </div>
                         )}
                         <textarea ref={textareaRef} rows={1} onMouseDown={(e) => { e.stopPropagation(); if (textareaRef.current) textareaRef.current.focus(); }}
                             spellCheck={false}
                             className={`${className} outline-none overflow-hidden resize-none ${completed ? 'strikethrough-line' : ''}`} 
-                            style={{ color: completed ? '' : '#1E293B', fontSize: '12px', padding: '0' }} 
+                            style={{ color: completed ? '' : '#1E293B', fontSize: '12px', padding: '0', lineHeight: lineHeight }} 
                             value={value} onChange={(e) => onChange({text: e.target.value})} onInput={adjustHeight} />
                         <div className="delete-btn-box shrink-0">
                             <button onClick={(e) => { e.stopPropagation(); onDelete(); }} className="text-slate-300 hover:text-red-500 opacity-0 group-hover/item:opacity-100 px-1 shrink-0 transition-opacity flex items-center justify-center h-full"><Icon name="x" size={11} /></button>
@@ -565,15 +571,17 @@
                                 <header className="widget-header"><div className="flex items-center gap-1.5"><Icon name="check-square" className="text-emerald-600" size={12} /><h2 className="font-black text-[14px]">체크리스트</h2></div><div className="flex gap-1"><button onClick={()=>updateData({routines: [...(data.routines || []), {id:Date.now(), text:'', completed:false}]})} className="p-0.5 bg-indigo-600 text-white rounded hover:scale-110 flex items-center justify-center h-5 w-5"><Icon name="plus" size={12} /></button><button onClick={()=>setConfirmClear('checklist')} className="p-0.5 text-slate-300 hover:text-red-500 flex items-center justify-center h-5 w-5"><Icon name="trash-2" size={12} /></button></div></header>
                                 <div className="flex-grow overflow-y-auto custom-scrollbar px-1 space-y-0 selectable-text">
                                     {(data.routines || []).map(r => (
-                                        <div key={r.id} className="flex items-start group relative min-h-[16px]">
+                                        <div key={r.id} className="flex items-start group relative">
                                             <div className="flex-1">
-                                                {/* [수정] 체크리스트 항목 간 간격 0.9px 적용 */}
+                                                {/* [수정] 행간 1.5 적용: CSS 고정값 해제로 이제 정상 작동함 */}
                                                 <EditableItem 
                                                     id={r.id} 
                                                     className="item-input-dynamic" 
                                                     value={r.text} 
                                                     completed={r.completed} 
-                                                    marginBottom="mb-[0.9px]"
+                                                    marginBottom="mb-0"
+                                                    lineHeight="1.5"
+                                                    minHeight="0"
                                                     onChange={(updates) => { const ni = (data.routines || []).map(it => it.id === r.id ? { ...it, ...updates } : it); updateData({ routines: ni }); }} 
                                                     onDelete={() => { const ni = (data.routines || []).filter(it => it.id !== r.id); updateData({ routines: ni }); }} 
                                                 />
