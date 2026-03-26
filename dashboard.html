@@ -72,7 +72,6 @@
             border: none !important; background: transparent !important; flex: 1 !important; 
             width: 0; font-size: 12px; font-weight: bold; padding: 0 !important; margin: 0 !important; 
             resize: none !important; 
-            /* [해결] 기존 고정값 삭제하여 리액트 prop이 정상 작동하도록 수정 */
             display: block; overflow: hidden; word-break: break-all; white-space: pre-wrap; height: auto; 
         }
         .strikethrough-line { text-decoration: line-through !important; text-decoration-color: #475569 !important; text-decoration-thickness: 1.5px !important; color: #94a3b8 !important; }
@@ -361,9 +360,10 @@
 
             const waterCalendarDays = useMemo(() => {
                 const y = waterViewDate.getFullYear(), m = waterViewDate.getMonth();
-                const lastDate = new Date(y, m + 1, 0).getDate();
+                const adj = new Date(y, m, 1).getDay() === 0 ? 6 : new Date(y, m, 1).getDay() - 1;
                 const days = [];
-                for (let d = 1; d <= lastDate; d++) days.push(new Date(y, m, d));
+                for (let i = 0; i < adj; i++) days.push(null);
+                for (let d = 1; d <= new Date(y, m + 1, 0).getDate(); d++) days.push(new Date(y, m, d));
                 return days;
             }, [waterViewDate]);
 
@@ -414,7 +414,7 @@
                                             <div ref={ddayPopRef} className="popover-base top-full left-0 mt-2">
                                                 <div className="flex flex-col gap-2 w-44">
                                                     <div className="flex flex-col gap-1"><label className="text-[9px] font-black text-slate-400">내용</label><input type="text" className="dday-field" placeholder="방학, 시험 등" value={data.dDayTitle || ''} onChange={(e) => updateData({ dDayTitle: e.target.value })} spellCheck={false} /></div>
-                                                    <div className="flex flex-col gap-1"><label className="text-[9px] font-black text-slate-400">날짜</label><input type="date" className="dday-field" value={data.dDayDate || ''} onChange={(e) => updateData({ dDayDate: e.target.value })} /></div>
+                                                    <div className="flex flex-col gap-1"><label className="text-[9px] font-black text-slate-400">날짜</label><input type="date" className="dday-field" value={data.dDayDate || ''} onChange={(e) => data.dDayDate !== e.target.value && updateData({ dDayDate: e.target.value })} /></div>
                                                     <button onClick={() => setIsDDayPopOpen(false)} className="bg-indigo-600 text-white text-[10px] font-black py-1.5 rounded-md mt-1">확인</button>
                                                 </div>
                                             </div>
@@ -463,28 +463,23 @@
 
                     <div className="remainder-section">
                         <div className="widget-grid-row">
-                            <section className="glass-card h-[125px] overflow-hidden">
+                            {/* [수정] z-index 로직 강화: 팝업이 열려 있을 때 이 카드가 최상단으로 옴 */}
+                            <section className={`glass-card h-[125px] overflow-visible transition-all ${isWaterHistoryOpen || isAddWaterPopOpen || isGoalEditPopOpen ? 'z-[60]' : 'z-10'}`}>
                                 <header className="widget-header">
                                     <div className="flex items-center gap-1.5"><Icon name="droplets" className="text-blue-600" size={12} /><h2 className="font-black text-[14px]">수분 섭취</h2></div>
                                     <div className="flex gap-0.5">
-                                        <button onClick={() => { setTempAddVal(''); setIsAddWaterPopOpen(!isAddWaterPopOpen); }} className="p-1 text-slate-300 hover:text-blue-600 flex items-center justify-center h-5 w-5"><Icon name="plus" size={12} /></button>
-                                        <button onClick={() => setIsWaterHistoryOpen(!isWaterHistoryOpen)} className="p-1 text-slate-300 hover:text-blue-600 flex items-center justify-center h-5 w-5"><Icon name="calendar" size={12} /></button>
+                                        <button onClick={(e) => { e.stopPropagation(); setIsWaterHistoryOpen(!isWaterHistoryOpen); }} className="p-1 text-slate-300 hover:text-blue-600 flex items-center justify-center h-5 w-5"><Icon name="calendar" size={12} /></button>
                                     </div>
-                                    {isAddWaterPopOpen && (
-                                        <div ref={addPopRef} className="popover-base left-[10px] top-[25px] z-[99999] flex gap-1 shadow-lg border border-indigo-100">
-                                            <input autoFocus type="number" placeholder="ml" value={tempAddVal} onChange={e=>setTempAddVal(e.target.value)} className="w-16 h-6 text-[10px] font-black border rounded px-1 outline-none" />
-                                            <button onClick={()=>{ addWater(parseInt(tempAddVal)||0); setIsAddWaterPopOpen(false); }} className="bg-blue-600 text-white text-[10px] w-6 h-6 rounded flex items-center justify-center shadow-sm">+</button>
-                                        </div>
-                                    )}
                                     {isWaterHistoryOpen && (
-                                        <div ref={waterPopRef} className="popover-base left-[185px] top-0 mt-0 min-w-[175px] z-[99999]">
+                                        <div ref={waterPopRef} className="popover-base left-[185px] top-0 min-w-[175px] z-[99999]">
                                             <div className="flex items-center justify-between px-2 border-b pb-1 mb-2">
                                                 <button onClick={(e) => {e.stopPropagation(); setWaterViewDate(new Date(waterViewDate.getFullYear(), waterViewDate.getMonth()-1, 1))}} className="text-slate-400 hover:text-blue-600"><Icon name="chevron-left" size={12}/></button>
                                                 <h3 className="text-[10px] font-black text-slate-800">{waterViewDate.getFullYear()}년 {waterViewDate.getMonth()+1}월</h3>
                                                 <button onClick={(e) => {e.stopPropagation(); setWaterViewDate(new Date(waterViewDate.getFullYear(), waterViewDate.getMonth()+1, 1))}} className="text-slate-400 hover:text-blue-600"><Icon name="chevron-right" size={12}/></button>
                                             </div>
                                             <div className="water-calendar-grid custom-scrollbar max-h-[150px] overflow-y-auto">
-                                                {waterCalendarDays.map(date => {
+                                                {waterCalendarDays.map((date, idx) => {
+                                                    if (!date) return <div key={`empty-${idx}`} className="water-day-cell border-transparent"></div>;
                                                     const dStr = getLocalDateString(date);
                                                     const intake = data.waterHistory?.[dStr] || 0; const met = intake >= data.waterTarget;
                                                     return <div key={dStr} className={`water-day-cell ${met ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-400'}`}>{date.getDate()}</div>;
@@ -493,21 +488,35 @@
                                         </div>
                                     )}
                                 </header>
-                                <div className="flex flex-col flex-1 px-1 pb-[8px] justify-between"> 
-                                    <div className="flex items-center flex-col mt-[2px]">
-                                        <button onClick={() => { setTempGoalVal(''); setIsGoalEditPopOpen(!isGoalEditPopOpen); }} className="text-[9px] font-black text-slate-400 bg-white px-2 py-0.5 rounded-full border border-slate-100">Goal: {data.waterTarget}ml</button>
-                                        <div className="text-[18px] font-black text-blue-600 leading-none mt-0.5">{waterIntake} ml</div>
-                                        {isGoalEditPopOpen && <div ref={goalPopRef} className="absolute bottom-full left-[15px] mb-2 z-[100] popover-base flex gap-1"><input autoFocus type="number" value={tempGoalVal} onChange={e=>setTempGoalVal(e.target.value)} className="w-16 h-6 text-[10px] font-black border rounded px-1 outline-none" /><button onClick={()=>{ updateData({waterTarget: parseInt(tempGoalVal)||data.waterTarget}); setIsGoalEditPopOpen(false); }} className="bg-indigo-600 text-white text-[10px] w-6 h-6 rounded flex items-center justify-center">+</button></div>}
+                                <div className="flex flex-col flex-1 px-1 pb-[8px] justify-between relative"> 
+                                    <div className="flex justify-center mt-[2px]">
+                                        <button onClick={(e) => { e.stopPropagation(); setTempGoalVal(''); setIsGoalEditPopOpen(!isGoalEditPopOpen); }} className="text-[9px] font-black text-slate-400 bg-white px-2 py-0.5 rounded-full border border-slate-100 shadow-sm">Goal: {data.waterTarget}ml</button>
+                                        {isGoalEditPopOpen && <div ref={goalPopRef} className="absolute bottom-full left-[15px] mb-2 z-[9999] popover-base flex gap-1 shadow-lg border border-indigo-100"><input autoFocus type="number" value={tempGoalVal} onChange={e=>setTempGoalVal(e.target.value)} className="w-16 h-6 text-[10px] font-black border rounded px-1 outline-none" /><button onClick={()=>{ updateData({waterTarget: parseInt(tempGoalVal)||data.waterTarget}); setIsGoalEditPopOpen(false); }} className="bg-indigo-600 text-white text-[10px] w-6 h-6 rounded flex items-center justify-center">+</button></div>}
                                     </div>
-                                    <div className="w-full px-3 my-1">
-                                        <div className="w-full water-bar-custom bg-blue-50 rounded-full border border-blue-100 overflow-hidden">
+                                    
+                                    <div className="flex justify-center">
+                                        <div className="text-[18px] font-black text-blue-600 leading-none">{waterIntake} ml</div>
+                                    </div>
+
+                                    <div className="w-full px-3">
+                                        <div className="w-full water-bar-custom bg-blue-50 rounded-full border border-blue-100 overflow-hidden shadow-inner">
                                             <div className="h-full bg-gradient-to-r from-blue-400 to-blue-600 transition-all duration-700" style={{ width: `${Math.min((waterIntake/data.waterTarget)*100, 100)}%` }}></div>
                                         </div>
                                     </div>
-                                    <div className="flex gap-1 w-full px-0.5">
-                                        <button onClick={()=>addWater(250)} className="flex-1 bg-blue-50 text-blue-600 h-6 rounded text-[10px] font-black active:scale-95 transition-transform">+250</button>
-                                        <button onClick={()=>addWater(500)} className="flex-1 bg-blue-600 text-white h-6 rounded text-[10px] font-black shadow-sm active:scale-95 transition-transform">+500</button>
-                                        <button onClick={undoWater} disabled={!waterLogs || waterLogs.length === 0} className={`w-6 h-6 rounded flex items-center justify-center transition-all ${!waterLogs || waterLogs.length === 0 ? 'text-slate-200' : 'bg-orange-50 text-orange-600 active:scale-95'}`}><Icon name="rotate-ccw" size={12} /></button>
+                                    <div className="flex gap-1 w-full px-0.5 relative">
+                                        <button onClick={()=>addWater(250)} className="flex-1 bg-blue-50 text-blue-600 h-6 rounded text-[10px] font-black active:scale-95 transition-transform hover:bg-blue-100">+250</button>
+                                        <button onClick={()=>addWater(500)} className="flex-1 bg-blue-600 text-white h-6 rounded text-[10px] font-black shadow-sm active:scale-95 transition-transform hover:bg-blue-700">+500</button>
+                                        
+                                        <button onClick={(e) => { e.stopPropagation(); setTempAddVal(''); setIsAddWaterPopOpen(!isAddWaterPopOpen); }} className="w-6 h-6 bg-blue-100 text-blue-600 rounded flex items-center justify-center active:scale-95 transition-transform hover:bg-blue-200"><Icon name="plus" size={12} /></button>
+                                        
+                                        <button onClick={undoWater} disabled={!waterLogs || waterLogs.length === 0} className={`w-6 h-6 rounded flex items-center justify-center transition-all ${!waterLogs || waterLogs.length === 0 ? 'text-slate-200 cursor-not-allowed' : 'bg-orange-50 text-orange-600 active:scale-95 hover:bg-orange-100'}`}><Icon name="rotate-ccw" size={12} /></button>
+
+                                        {isAddWaterPopOpen && (
+                                            <div ref={addPopRef} className="popover-base bottom-full right-0 mb-2 z-[9999] flex gap-1 shadow-lg border border-indigo-100">
+                                                <input autoFocus type="number" placeholder="ml" value={tempAddVal} onChange={e=>setTempAddVal(e.target.value)} className="w-16 h-6 text-[10px] font-black border rounded px-1 outline-none" />
+                                                <button onClick={()=>{ addWater(parseInt(tempAddVal)||0); setIsAddWaterPopOpen(false); }} className="bg-blue-600 text-white text-[10px] w-6 h-6 rounded flex items-center justify-center shadow-sm">+</button>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </section>
@@ -573,7 +582,6 @@
                                     {(data.routines || []).map(r => (
                                         <div key={r.id} className="flex items-start group relative">
                                             <div className="flex-1">
-                                                {/* [수정] 행간 1.5 적용: CSS 고정값 해제로 이제 정상 작동함 */}
                                                 <EditableItem 
                                                     id={r.id} 
                                                     className="item-input-dynamic" 
@@ -628,18 +636,18 @@
                                 </div>
                             </section>
                             
-                            <section className="glass-card h-[135px] overflow-hidden">
+                            <section className="glass-card h-[135px] overflow-hidden relative transition-all z-10">
                                 {confirmClear === 'evaluation' && <div className="confirm-overlay"><p className="text-[11px] font-black text-slate-800 mb-2">전체 삭제하시겠습니까?</p><div className="flex gap-2"><button onClick={executeClear} className="px-5 py-1.5 bg-red-500 text-white rounded-lg text-[10px] font-black shadow-sm hover:bg-red-600">예</button><button onClick={() => setConfirmClear(null)} className="px-5 py-1.5 bg-slate-200 text-slate-600 rounded-lg text-[10px] font-black">아니오</button></div></div>}
                                 <header className="widget-header"><div className="flex items-center gap-1.5"><Icon name="clipboard-list" className="text-purple-600" size={12} /><h2 className="font-black text-[14px]">평가 계획</h2></div><button onClick={()=>setConfirmClear('evaluation')} className="p-0.5 text-slate-300 hover:text-red-500 flex items-center justify-center h-5 w-5"><Icon name="trash-2" size={12} /></button></header>
                                 <textarea className="w-full flex-grow bg-transparent px-2 pt-1 pb-2 text-[13px] font-bold text-slate-600 overflow-y-auto custom-scrollbar focus:bg-white resize-none outline-none selectable-text" value={data.evaluationMemo || ''} onChange={(e)=>updateData({evaluationMemo: e.target.value})} spellCheck={false} placeholder="내용 입력..." />
                             </section>
 
-                            <section className="glass-card h-[135px] overflow-hidden">
+                            <section className="glass-card h-[135px] overflow-hidden transition-all z-10">
                                 <header className="widget-header"><div className="flex items-center gap-1.5"><Icon name="wallet" className="text-blue-500" size={12} /><h2 className="font-black text-[14px]">예산 현황</h2></div><div className="flex items-center gap-1">{isBudgetLoading && <div className="loading-spinner"></div>}<button onClick={fetchBudgetData} className="p-0.5 text-slate-300 hover:text-blue-500 flex items-center justify-center h-5 w-5"><Icon name="rotate-cw" size={12} /></button><a href={BUDGET_SITE_URL} target="_blank" rel="noopener noreferrer" className="p-0.5 text-slate-300 hover:text-blue-500 flex items-center justify-center h-5 w-5"><Icon name="external-link" size={12} /></a></div></header>
                                 <div className="flex-grow overflow-y-auto custom-scrollbar"><table className="budget-table"><thead><tr><th>예산명</th><th>사용금액</th><th>잔액</th></tr></thead><tbody>{(budgetData.budgets || []).map(b => { const used = (budgetData.transactions || []).filter(t => t.budgetId === b.id).reduce((acc, curr) => acc + (curr.amount || 0), 0); return (<tr key={b.id}><td className="budget-name">{b.name}</td><td className="budget-amount">{formatKRW(used)}</td><td className="budget-balance">{formatKRW((b.plannedAmount || 0) - used)}</td></tr>); })}</tbody></table></div>
                             </section>
 
-                            <section className="glass-card h-[135px] overflow-hidden relative">
+                            <section className="glass-card h-[135px] overflow-hidden relative transition-all z-10">
                                 {confirmClear === 'memo' && <div className="confirm-overlay"><p className="text-[11px] font-black text-slate-800 mb-2">전체 삭제하시겠습니까?</p><div className="flex gap-2"><button onClick={executeClear} className="px-5 py-1.5 bg-red-500 text-white rounded-lg text-[10px] font-black shadow-sm hover:bg-red-600">예</button><button onClick={() => setConfirmClear(null)} className="px-5 py-1.5 bg-slate-200 text-slate-600 rounded-lg text-[10px] font-black">아니오</button></div></div>}
                                 <header className="widget-header"><div className="flex items-center gap-1.5"><Icon name="sticky-note" className="text-amber-600" size={12} /><h2 className="font-black text-[14px]">업무 메모</h2></div><button onClick={()=>setConfirmClear('memo')} className="p-0.5 text-slate-300 hover:text-red-500 flex items-center justify-center h-5 w-5"><Icon name="trash-2" size={12} /></button></header>
                                 <textarea className="w-full flex-grow bg-transparent px-2 pt-1 pb-2 text-[13px] font-bold text-slate-600 overflow-y-auto custom-scrollbar focus:bg-white resize-none outline-none selectable-text" value={data.generalMemo || ''} onChange={(e)=>updateData({generalMemo: e.target.value})} spellCheck={false} />
