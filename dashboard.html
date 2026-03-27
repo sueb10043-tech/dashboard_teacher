@@ -71,12 +71,13 @@
         .item-input-dynamic { 
             border: none !important; background: transparent !important; flex: 1 !important; 
             width: 100%; font-size: 12px; font-weight: bold; margin: 0 !important; 
-            resize: none !important; 
+            resize: none !important; padding: 0 !important;
             display: block; overflow: hidden; word-break: break-all; white-space: pre-wrap; height: auto;
         }
         .strikethrough-line { text-decoration: line-through !important; text-decoration-color: #475569 !important; text-decoration-thickness: 1.5px !important; color: #94a3b8 !important; }
         
-        .checkbox-container { width: 16px; display: flex; align-items: flex-start; justify-content: center; flex-shrink: 0; padding-top: 4.5px; }
+        /* [수평 정렬 해결] 체크박스 높이 미세 조정 */
+        .checkbox-container { width: 16px; display: flex; align-items: flex-start; justify-content: center; flex-shrink: 0; padding-top: 3px; }
         .compact-checkbox { width: 13px !important; height: 13px !important; accent-color: #4f46e5; cursor: pointer; margin: 0 !important; padding: 0 !important; }
         
         .popover-base { position: absolute; background: white !important; border: 1px solid #e2e8f0; border-radius: 1rem; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15); z-index: 9999; padding: 10px; animation: popFade 0.12s ease-out; }
@@ -98,9 +99,15 @@
         .budget-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 10px; }
         .budget-table th { background: #f8fafc; color: #64748b; font-weight: 900; padding: 4px 2px; border-bottom: 1px solid #e2e8f0; text-align: center; position: sticky; top: 0; z-index: 10; }
         .budget-table td { padding: 4px 2px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; line-height: 1.2; text-align: center; }
-        .budget-name { font-weight: 800; color: #334155; }
-        .budget-amount { font-family: 'Pretendard', monospace; font-weight: 700; color: #64748b; text-align: center; }
-        .budget-balance { color: #6366f1; font-weight: 800; text-align: center; }
+        
+        /* 평가계획 테이블 가로폭 최적화 */
+        .eval-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 10px; table-layout: fixed; }
+        .eval-table th { background: #f8fafc; color: #64748b; font-weight: 900; padding: 4px 1px; border-bottom: 1px solid #e2e8f0; text-align: center; position: sticky; top: 0; z-index: 10; }
+        .eval-table td { padding: 4px 2px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; line-height: 1.2; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 800; }
+        .eval-res-cell { cursor: pointer; transition: background-color 0.1s; position: relative; }
+        .eval-res-cell:hover { background-color: #f8fafc; }
+        .eval-res-cell:active { background-color: #eef2ff; }
+        .eval-done { color: #cbd5e1 !important; text-decoration: line-through; }
 
         .dday-badge { cursor: pointer; background: #6366f1; color: white; padding: 4px 10px; border-radius: 9999px; font-size: 11px; font-weight: 900; transition: all 0.2s; box-shadow: 0 2px 4px rgba(99, 102, 241, 0.2); display: flex; align-items: center; gap: 6px; }
         .dday-badge:hover { transform: scale(1.05); background: #4f46e5; }
@@ -135,10 +142,10 @@
         const GAS_URL = "https://script.google.com/macros/s/AKfycbzoCgmF_cfpNOaImXQ7yY0UPOZ5eDuH1whp7NKTdEAvjPWGO6y5GzvafqySyy3Oul1l/exec"; 
         const DASHBOARD_SHEET = "교사용_바탕화면";
         const BUDGET_SHEET = "교사용_예산";
+        const EVAL_SHEET = "교사용_평가";
         const BUDGET_SITE_URL = "https://sueb10043-tech.github.io/schoolbudget/";
         
         const SAVE_RANGE = "A3:G3";
-        const LEGACY_RANGE = "A1";
 
         const BG_PALETTE = [{ name: 'pink', code: '#FFF1F2' }, { name: 'sky', code: '#F0F9FF' }, { name: 'green', code: '#F0FDF4' }, { name: 'reset', code: '#FFFFFF', icon: 'rotate-ccw' }];
 
@@ -176,7 +183,7 @@
 
         const formatKRW = (val) => (val || 0).toLocaleString('ko-KR');
 
-        const EditableItem = memo(({ id, value, completed, onChange, onDelete, className, hideCheckbox = false, gapClass = "gap-1.5", marginBottom = "mb-[1.5px]", lineHeight = "1.4", minHeight = "18.8px" }) => {
+        const EditableItem = memo(({ id, value, completed, onChange, onDelete, className, hideCheckbox = false, gapClass = "gap-1.5", marginBottom = "mb-[1.5px]", lineHeight = "1.5", minHeight = "18.8px" }) => {
             const textareaRef = useRef(null);
             const adjustHeight = useCallback(() => { 
                 const el = textareaRef.current;
@@ -190,16 +197,16 @@
                 <div className={`flex flex-col w-full group/item relative ${marginBottom}`}>
                     <div className={`calendar-item-row relative ${gapClass}`} style={{ minHeight: minHeight }}>
                         {!hideCheckbox && (
-                            <div className="checkbox-container" style={{ height: minHeight !== '0' ? '16.8px' : 'auto', minHeight: minHeight }}>
+                            <div className="checkbox-container">
                                 <input type="checkbox" checked={!!completed} onChange={(e) => onChange({completed: e.target.checked})} className="compact-checkbox" />
                             </div>
                         )}
                         <textarea ref={textareaRef} rows={1} onMouseDown={(e) => { e.stopPropagation(); if (textareaRef.current) textareaRef.current.focus(); }}
                             spellCheck={false}
                             className={`${className} outline-none overflow-hidden resize-none ${completed ? 'strikethrough-line' : ''}`} 
-                            style={{ color: completed ? '' : '#1E293B', fontSize: '12px', padding: '2px 0', lineHeight: lineHeight }} 
+                            style={{ color: completed ? '' : '#1E293B', fontSize: '12px', padding: '0', lineHeight: lineHeight }} 
                             value={value} onChange={(e) => onChange({text: e.target.value})} onInput={adjustHeight} />
-                        <div className="delete-btn-box shrink-0 pt-[4.5px]">
+                        <div className="delete-btn-box shrink-0 flex items-start pt-[4px]">
                             <button onClick={(e) => { e.stopPropagation(); onDelete(); }} className="text-slate-300 hover:text-red-500 opacity-0 group-hover/item:opacity-100 px-1 shrink-0 transition-opacity flex items-center justify-center h-full"><Icon name="x" size={11} /></button>
                         </div>
                     </div>
@@ -215,7 +222,9 @@
                 lastResetDate: "", dDayDate: "", dDayTitle: "", links: [] 
             });
             const [budgetData, setBudgetData] = useState({ budgets: [], transactions: [] });
+            const [evalData, setEvalData] = useState([]);
             const [isBudgetLoading, setIsBudgetLoading] = useState(false);
+            const [isEvalLoading, setIsEvalLoading] = useState(false);
             const [now, setNow] = useState(new Date());
             const [isInitialLoading, setIsInitialLoading] = useState(true);
             const [isSyncing, setIsSyncing] = useState(false);
@@ -241,11 +250,11 @@
             const waterPopRef = useRef(null); const ddayPopRef = useRef(null); const linkPopRef = useRef(null);
 
             const todayStr = useMemo(() => getLocalDateString(now), [now]);
+            const waterIntake = useMemo(() => data.waterHistory?.[todayStr] || 0, [data.waterHistory, todayStr]);
+            const waterLogs = useMemo(() => data.waterHistoryLogs?.[todayStr] || [], [data.waterHistoryLogs, todayStr]);
+
             const [viewDate, setViewDate] = useState(new Date()); 
             const [waterViewDate, setWaterViewDate] = useState(new Date());
-
-            const waterIntake = data.waterHistory?.[todayStr] || 0;
-            const waterLogs = data.waterHistoryLogs?.[todayStr] || [];
 
             const updateData = useCallback((updates) => { setData(prev => ({ ...prev, ...updates })); }, []);
 
@@ -275,12 +284,10 @@
                     if (logs.length === 0) return prev;
                     const lastAmount = logs[logs.length - 1];
                     const intake = prev.waterHistory?.[todayStr] || 0;
-                    const newLogs = logs.slice(0, -1);
-                    const newIntake = Math.max(0, intake - lastAmount);
                     return {
                         ...prev,
-                        waterHistory: { ...(prev.waterHistory || {}), [todayStr]: newIntake },
-                        waterHistoryLogs: { ...(prev.waterHistoryLogs || {}), [todayStr]: newLogs }
+                        waterHistory: { ...prev.waterHistory, [todayStr]: Math.max(0, intake - lastAmount) },
+                        waterHistoryLogs: { ...prev.waterHistoryLogs, [todayStr]: logs.slice(0, -1) }
                     };
                 });
             }, [todayStr]);
@@ -294,9 +301,7 @@
                 return diff > 0 ? `D-${diff}` : `D+${Math.abs(diff)}`;
             }, [data.dDayDate, todayStr]);
 
-            /* [수정] 링크 추가 시 기본 텍스트 '새 링크' 복구 */
             const addLink = useCallback(() => { setData(prev => ({ ...prev, links: [...(prev.links || []), { id: Date.now(), text: '새 링크', url: '' }] })); }, []);
-            
             const openLink = useCallback((link) => { if (!isLinkEditMode && link.url && link.url.trim() !== "") { let url = link.url.trim(); if (!url.startsWith('http')) url = 'https://' + url; window.open(url, '_blank'); } }, [isLinkEditMode]);
             const handleEditUrl = useCallback((link) => { setEditingLinkId(link.id); setTempUrlVal(link.url || ''); setIsLinkEditPopOpen(true); }, []);
             const saveUrl = useCallback(() => { if (!editingLinkId) return; setData(prev => ({ ...prev, links: (prev.links || []).map(l => l.id === editingLinkId ? { ...l, url: tempUrlVal } : l) })); setIsLinkEditPopOpen(false); setEditingLinkId(null); }, [editingLinkId, tempUrlVal]);
@@ -312,11 +317,6 @@
                         const row = values[0];
                         const safeJSON = (str) => { if(!str) return null; try { return JSON.parse(str); } catch(e) { return null; } };
                         setData({ monthlyData: safeJSON(row[0]) || {}, routines: safeJSON(row[1]) || [], personalRoutines: safeJSON(row[2]) || [], ...(safeJSON(row[3]) || { waterTarget: 2000, waterHistory: {}, waterHistoryLogs: {} }), links: safeJSON(row[4]) || [], ...(safeJSON(row[5]) || { generalMemo: '', evaluationMemo: '' }), ...(safeJSON(row[6]) || { schoolInfo: null, lastResetDate: '', dDayDate: '', dDayTitle: '' }) });
-                    } else {
-                        const legacyRes = await fetch(`${GAS_URL}?sheet=${encodeURIComponent(DASHBOARD_SHEET)}&range=${LEGACY_RANGE}`);
-                        const legacyResult = await legacyRes.json();
-                        let oldData = typeof legacyResult === 'string' ? JSON.parse(legacyResult) : legacyResult;
-                        if (oldData && oldData.monthlyData) setData(oldData);
                     }
                 } catch (e) { console.error("데이터 로드 중 오류:", e); }
                 finally { setIsInitialLoading(false); setIsSyncing(false); }
@@ -344,7 +344,88 @@
                 } catch (e) {} finally { setIsBudgetLoading(false); }
             }, []);
 
-            useEffect(() => { loadFromCloud(); fetchBudgetData(); }, [loadFromCloud, fetchBudgetData]);
+            const fetchEvalData = useCallback(async () => {
+                setIsEvalLoading(true);
+                try {
+                    const res = await fetch(`${GAS_URL}?sheet=${encodeURIComponent(EVAL_SHEET)}&range=A3:H100`);
+                    const result = await res.json();
+                    let rows = typeof result === 'string' ? JSON.parse(result) : result;
+                    if (Array.isArray(rows)) {
+                        const filtered = rows.filter(r => r.some(cell => cell && cell.toString().trim() !== ""));
+                        let lastSub = "";
+                        const processed = filtered.map((r, idx) => {
+                            const subName = r[0] && r[0].toString().trim() !== "" ? r[0] : lastSub;
+                            const isNewSub = (r[0] && r[0].toString().trim() !== "");
+                            lastSub = subName;
+                            
+                            const isDone = [r[4], r[5], r[6], r[7]].every(v => v && v.toString().trim() !== "");
+
+                            return {
+                                sheetRow: idx + 3, // 실제 시트의 행 번호 (3행부터 시작)
+                                subject: subName,
+                                isMerged: !isNewSub,
+                                unit: r[1],
+                                factor: r[3],
+                                n1: r[4] || "", n2: r[5] || "", n3: r[6] || "", n4: r[7] || "",
+                                isDone: isDone
+                            };
+                        });
+                        setEvalData(processed);
+                    }
+                } catch (e) {} finally { setIsEvalLoading(false); }
+            }, []);
+
+            /* [지능형 정렬] 과목별 국어 2, 수학 1, 통합 2 우선순위 추출 */
+            const prioritizedEvalData = useMemo(() => {
+                if (!evalData.length) return [];
+                
+                const splitByCategory = (list, count) => {
+                    const incomplete = list.filter(item => !item.isDone);
+                    const complete = list.filter(item => item.isDone);
+                    return {
+                        priority: incomplete.slice(0, count),
+                        rest: [...incomplete.slice(count), ...complete]
+                    };
+                };
+
+                const korean = splitByCategory(evalData.filter(d => d.subject === '국어'), 2);
+                const math = splitByCategory(evalData.filter(d => d.subject === '수학'), 1);
+                const integrated = splitByCategory(evalData.filter(d => d.subject === '통합'), 2);
+                const others = evalData.filter(d => !['국어', '수학', '통합'].includes(d.subject));
+
+                return [...korean.priority, ...math.priority, ...integrated.priority, ...korean.rest, ...math.rest, ...integrated.rest, ...others];
+            }, [evalData]);
+
+            /* [원터치 입력] 평가 결과 ◎, ○, △ 순환 로직 */
+            const cycleEvalResult = async (rowObj, colKey) => {
+                const results = ["", "◎", "○", "△"];
+                const currentVal = rowObj[colKey];
+                const nextIdx = (results.indexOf(currentVal) + 1) % results.length;
+                const nextVal = results[nextIdx];
+
+                // 로컬 상태 즉시 업데이트
+                setEvalData(prev => prev.map(item => item.sheetRow === rowObj.sheetRow ? { ...item, [colKey]: nextVal } : item));
+
+                // 시트 실시간 저장 (Column E: 1번, F: 2번, G: 3번, H: 4번)
+                const colLetter = { n1: 'E', n2: 'F', n3: 'G', n4: 'H' }[colKey];
+                const range = `${colLetter}${rowObj.sheetRow}`;
+                try {
+                    await fetch(`${GAS_URL}?sheet=${encodeURIComponent(EVAL_SHEET)}`, {
+                        method: 'POST', mode: 'no-cors',
+                        body: JSON.stringify({ range, data: [[nextVal]] })
+                    });
+                } catch (e) { console.error("결과 저장 실패:", e); }
+            };
+
+            /* [과목 색상 매핑] */
+            const getSubjectColor = (sub) => {
+                if (sub === '국어') return 'text-indigo-600';
+                if (sub === '수학') return 'text-rose-600';
+                if (sub === '통합') return 'text-emerald-600';
+                return 'text-amber-600';
+            };
+
+            useEffect(() => { loadFromCloud(); fetchBudgetData(); fetchEvalData(); }, [loadFromCloud, fetchBudgetData, fetchEvalData]);
             useEffect(() => { const timer = setTimeout(() => { saveToCloud(data); }, 1500); return () => clearTimeout(timer); }, [data, saveToCloud]);
 
             useEffect(() => {
@@ -423,6 +504,7 @@
                                     <h2 className="font-black text-[15px] text-slate-800 tracking-tight truncate">{viewDate.getFullYear()}년 {viewDate.getMonth()+1}월 월별 계획</h2>
                                     <div className="relative ml-4">
                                         <button onClick={() => setIsDDayPopOpen(!isDDayPopOpen)} className="dday-badge">
+                                            {/* [해결] size={10} 문법 오류 수정 */}
                                             <Icon name="flag" size={10} />
                                             <span>{data.dDayDate ? `${data.dDayTitle || '이벤트'} ${dDayValue}` : "D-Day 설정"}</span>
                                         </button>
@@ -510,9 +592,11 @@
                                         <button onClick={(e) => { e.stopPropagation(); setTempGoalVal(''); setIsGoalEditPopOpen(!isGoalEditPopOpen); }} className="text-[9px] font-black text-slate-400 bg-white px-2 py-0.5 rounded-full border border-slate-100 shadow-sm">Goal: {data.waterTarget}ml</button>
                                         {isGoalEditPopOpen && <div ref={goalPopRef} className="absolute bottom-full left-[15px] mb-2 z-[9999] popover-base flex gap-1 shadow-lg border border-indigo-100"><input autoFocus type="number" value={tempGoalVal} onChange={e=>setTempGoalVal(e.target.value)} className="w-16 h-6 text-[10px] font-black border rounded px-1 outline-none" /><button onClick={()=>{ updateData({waterTarget: parseInt(tempGoalVal)||data.waterTarget}); setIsGoalEditPopOpen(false); }} className="bg-indigo-600 text-white text-[10px] w-6 h-6 rounded flex items-center justify-center">+</button></div>}
                                     </div>
+                                    
                                     <div className="flex justify-center">
                                         <div className="text-[18px] font-black text-blue-600 leading-none">{waterIntake} ml</div>
                                     </div>
+
                                     <div className="w-full px-3">
                                         <div className="w-full water-bar-custom bg-blue-50 rounded-full border border-blue-100 overflow-hidden shadow-inner">
                                             <div className="h-full bg-gradient-to-r from-blue-400 to-blue-600 transition-all duration-700" style={{ width: `${Math.min((waterIntake/data.waterTarget)*100, 100)}%` }}></div>
@@ -641,11 +725,7 @@
                                     )}
                                     {isLinkEditPopOpen && (
                                         <div ref={linkPopRef} className="popover-base left-0 top-0 w-[170px] !z-[9999] flex flex-col gap-2">
-                                            <div className="flex flex-col gap-1">
-                                                <label className="text-[10px] font-black text-slate-400">제목 수정</label>
-                                                {/* [수정] placeholder 제거하여 입력창 깔끔하게 유지 */}
-                                                <input type="text" className="dday-field outline-none" value={(data.links || []).find(l=>l.id===editingLinkId)?.text || ''} onChange={(e) => { const newText = e.target.value; setData(prev => ({ ...prev, links: (prev.links || []).map(l => l.id === editingLinkId ? {...l, text: newText} : l) })); }} spellCheck={false} />
-                                            </div>
+                                            <div className="flex flex-col gap-1"><label className="text-[10px] font-black text-slate-400">제목 수정</label><input type="text" className="dday-field outline-none" value={(data.links || []).find(l=>l.id===editingLinkId)?.text || ''} onChange={(e) => { const newText = e.target.value; setData(prev => ({ ...prev, links: (prev.links || []).map(l => l.id === editingLinkId ? {...l, text: newText} : l) })); }} spellCheck={false} /></div>
                                             <div className="flex flex-col gap-1"><label className="text-[10px] font-black text-slate-400">URL 입력</label><div className="flex gap-1"><input autoFocus type="text" className="dday-field bg-slate-50 flex-1 outline-none" placeholder="https://..." value={tempUrlVal} onChange={(e) => setTempUrlVal(e.target.value)} spellCheck={false} /><button onClick={saveUrl} className="bg-indigo-600 text-white text-[9px] font-black px-2 py-1.5 rounded flex items-center justify-center shadow-sm">저장</button></div></div>
                                         </div>
                                     )}
@@ -653,9 +733,44 @@
                             </section>
                             
                             <section className="glass-card h-[135px] overflow-hidden relative transition-all z-10">
-                                {confirmClear === 'evaluation' && <div className="confirm-overlay"><p className="text-[11px] font-black text-slate-800 mb-2">전체 삭제하시겠습니까?</p><div className="flex gap-2"><button onClick={executeClear} className="px-5 py-1.5 bg-red-500 text-white rounded-lg text-[10px] font-black shadow-sm hover:bg-red-600">예</button><button onClick={() => setConfirmClear(null)} className="px-5 py-1.5 bg-slate-200 text-slate-600 rounded-lg text-[10px] font-black">아니오</button></div></div>}
-                                <header className="widget-header"><div className="flex items-center gap-1.5"><Icon name="clipboard-list" className="text-purple-600" size={12} /><h2 className="font-black text-[14px]">평가 계획</h2></div><button onClick={()=>setConfirmClear('evaluation')} className="p-0.5 text-slate-300 hover:text-red-500 flex items-center justify-center h-5 w-5"><Icon name="trash-2" size={12} /></button></header>
-                                <textarea className="w-full flex-grow bg-transparent px-2 pt-1 pb-2 text-[13px] font-bold text-slate-600 overflow-y-auto custom-scrollbar focus:bg-white resize-none outline-none selectable-text" value={data.evaluationMemo || ''} onChange={(e)=>updateData({evaluationMemo: e.target.value})} spellCheck={false} placeholder="내용 입력..." />
+                                <header className="widget-header">
+                                    <div className="flex items-center gap-1.5"><Icon name="clipboard-list" className="text-purple-600" size={12} /><h2 className="font-black text-[14px]">평가 계획</h2></div>
+                                    <div className="flex items-center gap-1">
+                                        {isEvalLoading && <div className="loading-spinner"></div>}
+                                        <button onClick={fetchEvalData} className="p-0.5 text-slate-300 hover:text-purple-600 flex items-center justify-center h-5 w-5"><Icon name="rotate-cw" size={12} /></button>
+                                    </div>
+                                </header>
+                                <div className="flex-grow overflow-y-auto custom-scrollbar">
+                                    <table className="eval-table">
+                                        <thead>
+                                            <tr>
+                                                <th style={{ width: '30px' }}>과목</th>
+                                                <th style={{ width: '30px' }}>단원</th>
+                                                <th>평가 요소</th>
+                                                <th style={{ width: '18px' }}>1</th>
+                                                <th style={{ width: '18px' }}>2</th>
+                                                <th style={{ width: '18px' }}>3</th>
+                                                <th style={{ width: '18px' }}>4</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {prioritizedEvalData.map((row, idx) => (
+                                                <tr key={idx} className={row.isDone ? 'eval-done' : ''}>
+                                                    {/* [1번] 과목별 컬러 매핑 적용 */}
+                                                    <td className={`eval-subject ${getSubjectColor(row.subject)}`}>{row.subject}</td>
+                                                    <td>{row.unit}</td>
+                                                    <td className="text-left px-1" title={row.factor}>{row.factor}</td>
+                                                    {/* [2번] ◎, ○, △ 순환 입력 로직 적용 */}
+                                                    {['n1', 'n2', 'n3', 'n4'].map(col => (
+                                                        <td key={col} className="eval-res-cell font-black" onClick={() => cycleEvalResult(row, col)}>
+                                                            {row[col]}
+                                                        </td>
+                                                    ))}
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
                             </section>
 
                             <section className="glass-card h-[135px] overflow-hidden transition-all z-10">
