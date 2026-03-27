@@ -70,15 +70,13 @@
         
         .item-input-dynamic { 
             border: none !important; background: transparent !important; flex: 1 !important; 
-            width: 0; font-size: 12px; font-weight: bold; padding: 0 !important; margin: 0 !important; 
+            width: 100%; font-size: 12px; font-weight: bold; margin: 0 !important; 
             resize: none !important; 
             display: block; overflow: hidden; word-break: break-all; white-space: pre-wrap; height: auto;
-            vertical-align: top;
         }
         .strikethrough-line { text-decoration: line-through !important; text-decoration-color: #475569 !important; text-decoration-thickness: 1.5px !important; color: #94a3b8 !important; }
         
-        /* [중요] 체크박스 컨테이너: 상단 마진을 부여하여 텍스트의 첫 줄 중앙과 수평 정렬 */
-        .checkbox-container { width: 16px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px; }
+        .checkbox-container { width: 16px; display: flex; align-items: flex-start; justify-content: center; flex-shrink: 0; padding-top: 4.5px; }
         .compact-checkbox { width: 13px !important; height: 13px !important; accent-color: #4f46e5; cursor: pointer; margin: 0 !important; padding: 0 !important; }
         
         .popover-base { position: absolute; background: white !important; border: 1px solid #e2e8f0; border-radius: 1rem; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15); z-index: 9999; padding: 10px; animation: popFade 0.12s ease-out; }
@@ -89,7 +87,6 @@
         .pillar-container { display: flex; width: 100%; gap: 8px; align-items: flex-start; }
         .pillar { flex: 1; display: flex; flex-direction: column; gap: 0px; }
         
-        /* [수정] 그리드 아이템 컨테이너: items-start로 변경하여 긴 텍스트 대응 */
         .grid-item-container { background: transparent; border-radius: 0; padding: 0; display: flex; align-items: flex-start; gap: 4px; min-width: 0; overflow: visible !important; }
         
         .sync-indicator { font-size: 10px; font-weight: 900; color: #6366f1; display: flex; align-items: center; gap: 4px; background: rgba(99, 102, 241, 0.1); padding: 2px 8px; border-radius: 9999px; }
@@ -122,8 +119,7 @@
         .drag-handle-slim { color: #cbd5e1; flex-shrink: 0; }
         .edit-mode-highlight { background: rgba(99, 102, 241, 0.05); }
 
-        /* [핵심] 수평 정렬을 보장하는 항목 행 스타일 */
-        .calendar-item-row { display: flex !important; flex-direction: row !important; align-items: flex-start !important; width: 100%; gap: 6px; position: relative; }
+        .calendar-item-row { display: flex !important; flex-direction: row !important; align-items: flex-start !important; width: 100%; gap: 6px; min-height: 18.8px; position: relative; }
         
         .water-bar-custom { height: 6px; }
         .water-calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
@@ -194,18 +190,17 @@
                 <div className={`flex flex-col w-full group/item relative ${marginBottom}`}>
                     <div className={`calendar-item-row relative ${gapClass}`} style={{ minHeight: minHeight }}>
                         {!hideCheckbox && (
-                            /* [해결] 체크박스 컨테이너 상단 정렬 최적화 */
-                            <div className="checkbox-container">
+                            <div className="checkbox-container" style={{ height: minHeight !== '0' ? '16.8px' : 'auto', minHeight: minHeight }}>
                                 <input type="checkbox" checked={!!completed} onChange={(e) => onChange({completed: e.target.checked})} className="compact-checkbox" />
                             </div>
                         )}
                         <textarea ref={textareaRef} rows={1} onMouseDown={(e) => { e.stopPropagation(); if (textareaRef.current) textareaRef.current.focus(); }}
                             spellCheck={false}
                             className={`${className} outline-none overflow-hidden resize-none ${completed ? 'strikethrough-line' : ''}`} 
-                            style={{ color: completed ? '' : '#1E293B', fontSize: '12px', padding: '0', lineHeight: lineHeight, marginTop: '2px' }} 
+                            style={{ color: completed ? '' : '#1E293B', fontSize: '12px', padding: '2px 0', lineHeight: lineHeight }} 
                             value={value} onChange={(e) => onChange({text: e.target.value})} onInput={adjustHeight} />
-                        <div className="delete-btn-box shrink-0 flex items-start pt-[3px]">
-                            <button onClick={(e) => { e.stopPropagation(); onDelete(); }} className="text-slate-300 hover:text-red-500 opacity-0 group-hover/item:opacity-100 px-1 shrink-0 transition-opacity flex items-center justify-center"><Icon name="x" size={11} /></button>
+                        <div className="delete-btn-box shrink-0 pt-[4.5px]">
+                            <button onClick={(e) => { e.stopPropagation(); onDelete(); }} className="text-slate-300 hover:text-red-500 opacity-0 group-hover/item:opacity-100 px-1 shrink-0 transition-opacity flex items-center justify-center h-full"><Icon name="x" size={11} /></button>
                         </div>
                     </div>
                 </div>
@@ -263,18 +258,32 @@
             }, [isInitialLoading, todayStr, data.lastResetDate]);
 
             const addWater = useCallback((amount) => {
-                const newIntake = (waterIntake || 0) + amount;
-                const newLogs = [...(waterLogs || []), amount];
-                updateData({ waterHistory: { ...(data.waterHistory || {}), [todayStr]: newIntake }, waterHistoryLogs: { ...(data.waterHistoryLogs || {}), [todayStr]: newLogs } });
-            }, [waterIntake, waterLogs, data.waterHistory, data.waterHistoryLogs, todayStr, updateData]);
+                setData(prev => {
+                    const intake = prev.waterHistory?.[todayStr] || 0;
+                    const logs = prev.waterHistoryLogs?.[todayStr] || [];
+                    return {
+                        ...prev,
+                        waterHistory: { ...prev.waterHistory, [todayStr]: intake + amount },
+                        waterHistoryLogs: { ...prev.waterHistoryLogs, [todayStr]: [...logs, amount] }
+                    };
+                });
+            }, [todayStr]);
 
             const undoWater = useCallback(() => {
-                if (!waterLogs || waterLogs.length === 0) return;
-                const lastAmount = waterLogs[waterLogs.length - 1];
-                const newIntake = Math.max(0, (waterIntake || 0) - lastAmount);
-                const newLogs = waterLogs.slice(0, -1);
-                updateData({ waterHistory: { ...(data.waterHistory || {}), [todayStr]: newIntake }, waterHistoryLogs: { ...(data.waterHistoryLogs || {}), [todayStr]: newLogs } });
-            }, [waterLogs, waterIntake, data.waterHistory, data.waterHistoryLogs, todayStr, updateData]);
+                setData(prev => {
+                    const logs = prev.waterHistoryLogs?.[todayStr] || [];
+                    if (logs.length === 0) return prev;
+                    const lastAmount = logs[logs.length - 1];
+                    const intake = prev.waterHistory?.[todayStr] || 0;
+                    const newLogs = logs.slice(0, -1);
+                    const newIntake = Math.max(0, intake - lastAmount);
+                    return {
+                        ...prev,
+                        waterHistory: { ...(prev.waterHistory || {}), [todayStr]: newIntake },
+                        waterHistoryLogs: { ...(prev.waterHistoryLogs || {}), [todayStr]: newLogs }
+                    };
+                });
+            }, [todayStr]);
 
             const dDayValue = useMemo(() => {
                 if (!data.dDayDate) return '';
@@ -285,7 +294,9 @@
                 return diff > 0 ? `D-${diff}` : `D+${Math.abs(diff)}`;
             }, [data.dDayDate, todayStr]);
 
+            /* [수정] 링크 추가 시 기본 텍스트 '새 링크' 복구 */
             const addLink = useCallback(() => { setData(prev => ({ ...prev, links: [...(prev.links || []), { id: Date.now(), text: '새 링크', url: '' }] })); }, []);
+            
             const openLink = useCallback((link) => { if (!isLinkEditMode && link.url && link.url.trim() !== "") { let url = link.url.trim(); if (!url.startsWith('http')) url = 'https://' + url; window.open(url, '_blank'); } }, [isLinkEditMode]);
             const handleEditUrl = useCallback((link) => { setEditingLinkId(link.id); setTempUrlVal(link.url || ''); setIsLinkEditPopOpen(true); }, []);
             const saveUrl = useCallback(() => { if (!editingLinkId) return; setData(prev => ({ ...prev, links: (prev.links || []).map(l => l.id === editingLinkId ? { ...l, url: tempUrlVal } : l) })); setIsLinkEditPopOpen(false); setEditingLinkId(null); }, [editingLinkId, tempUrlVal]);
@@ -442,11 +453,8 @@
                                     const dStr = getLocalDateString(date);
                                     const isT = dStr === todayStr; 
                                     const dayData = (data.monthlyData || {})[dStr] || { holiday:'', items:[], bgColor: '#FFFFFF' };
-                                    
-                                    /* [수정] 배경색이 빨간색(분홍색)인 경우 날짜 색도 빨간색으로 변경 */
                                     const isHolidayBg = dayData.bgColor === '#FFF1F2';
                                     const dateColorClass = (date.getDay() === 0 || isHolidayBg) ? 'text-red-500' : date.getDay() === 6 ? 'text-indigo-500' : 'text-slate-400';
-
                                     return (
                                         <div key={dStr} className={`table-cell group ${isT ? 'today-highlight' : ''}`} style={{ backgroundColor: dayData.bgColor }}>
                                             <div className="flex items-start mb-0.5 px-0 shrink-0 h-[20px] overflow-visible">
@@ -502,11 +510,9 @@
                                         <button onClick={(e) => { e.stopPropagation(); setTempGoalVal(''); setIsGoalEditPopOpen(!isGoalEditPopOpen); }} className="text-[9px] font-black text-slate-400 bg-white px-2 py-0.5 rounded-full border border-slate-100 shadow-sm">Goal: {data.waterTarget}ml</button>
                                         {isGoalEditPopOpen && <div ref={goalPopRef} className="absolute bottom-full left-[15px] mb-2 z-[9999] popover-base flex gap-1 shadow-lg border border-indigo-100"><input autoFocus type="number" value={tempGoalVal} onChange={e=>setTempGoalVal(e.target.value)} className="w-16 h-6 text-[10px] font-black border rounded px-1 outline-none" /><button onClick={()=>{ updateData({waterTarget: parseInt(tempGoalVal)||data.waterTarget}); setIsGoalEditPopOpen(false); }} className="bg-indigo-600 text-white text-[10px] w-6 h-6 rounded flex items-center justify-center">+</button></div>}
                                     </div>
-                                    
                                     <div className="flex justify-center">
                                         <div className="text-[18px] font-black text-blue-600 leading-none">{waterIntake} ml</div>
                                     </div>
-
                                     <div className="w-full px-3">
                                         <div className="w-full water-bar-custom bg-blue-50 rounded-full border border-blue-100 overflow-hidden shadow-inner">
                                             <div className="h-full bg-gradient-to-r from-blue-400 to-blue-600 transition-all duration-700" style={{ width: `${Math.min((waterIntake/data.waterTarget)*100, 100)}%` }}></div>
@@ -516,7 +522,7 @@
                                         <button onClick={()=>addWater(250)} className="flex-1 bg-blue-50 text-blue-600 h-6 rounded text-[10px] font-black active:scale-95 transition-transform hover:bg-blue-100">+250</button>
                                         <button onClick={()=>addWater(500)} className="flex-1 bg-blue-600 text-white h-6 rounded text-[10px] font-black shadow-sm active:scale-95 transition-transform hover:bg-blue-700">+500</button>
                                         <button onClick={(e) => { e.stopPropagation(); setTempAddVal(''); setIsAddWaterPopOpen(!isAddWaterPopOpen); }} className="w-6 h-6 bg-blue-100 text-blue-600 rounded flex items-center justify-center active:scale-95 transition-transform hover:bg-blue-200"><Icon name="plus" size={12} /></button>
-                                        <button onClick={undoWater} disabled={!waterLogs || waterLogs.length === 0} className={`w-6 h-6 rounded flex items-center justify-center transition-all ${!waterLogs || waterLogs.length === 0 ? 'text-slate-200 cursor-not-allowed' : 'bg-orange-50 text-orange-600 active:scale-95 hover:bg-orange-100'}`}><Icon name="rotate-ccw" size={12} /></button>
+                                        <button onClick={(e) => { e.stopPropagation(); undoWater(); }} disabled={!waterLogs || waterLogs.length === 0} className={`w-6 h-6 rounded flex items-center justify-center transition-all ${!waterLogs || waterLogs.length === 0 ? 'text-slate-200 cursor-not-allowed' : 'bg-orange-50 text-orange-600 active:scale-95 hover:bg-orange-100'}`}><Icon name="rotate-ccw" size={12} /></button>
                                         {isAddWaterPopOpen && (
                                             <div ref={addPopRef} className="popover-base bottom-full right-0 mb-2 z-[9999] flex gap-1 shadow-lg border border-indigo-100">
                                                 <input autoFocus type="number" placeholder="ml" value={tempAddVal} onChange={e=>setTempAddVal(e.target.value)} className="w-16 h-6 text-[10px] font-black border rounded px-1 outline-none" />
@@ -527,7 +533,6 @@
                                 </div>
                             </section>
 
-                            {/* 개인 루틴 및 체크리스트의 정렬 문제는 EditableItem 내부의 checkbox-container 마진과 textarea padding 제거로 해결됨 */}
                             <section key={`routine-section-${isRoutineEditMode}`} className={`glass-card h-[125px] overflow-hidden ${isRoutineEditMode ? 'edit-mode-highlight' : ''}`}>
                                 <header className="widget-header">
                                     <div className="flex items-center gap-1.5"><Icon name="list-checks" className="text-indigo-600" size={12} /><h2 className="font-black text-[14px]">개인 루틴</h2></div>
@@ -608,7 +613,7 @@
                         </div>
 
                         <div className="widget-grid-row">
-                            <section key={`link-section-${isLinkEditMode}`} className="glass-card h-[135px] overflow-visible">
+                            <section key={`link-section-${isLinkEditMode}`} className="glass-card h-[135px] overflow-visible transition-all z-10">
                                 <header className="widget-header">
                                     <div className="flex items-center gap-1.5"><Icon name="link" className="text-indigo-500" size={12} /><h2 className="font-black text-[14px]">링크</h2></div>
                                     <div className="flex gap-1">
@@ -636,7 +641,11 @@
                                     )}
                                     {isLinkEditPopOpen && (
                                         <div ref={linkPopRef} className="popover-base left-0 top-0 w-[170px] !z-[9999] flex flex-col gap-2">
-                                            <div className="flex flex-col gap-1"><label className="text-[10px] font-black text-slate-400">제목 수정</label><input type="text" className="dday-field outline-none" value={(data.links || []).find(l=>l.id===editingLinkId)?.text || ''} onChange={(e) => { const newText = e.target.value; setData(prev => ({ ...prev, links: (prev.links || []).map(l => l.id === editingLinkId ? {...l, text: newText} : l) })); }} spellCheck={false} /></div>
+                                            <div className="flex flex-col gap-1">
+                                                <label className="text-[10px] font-black text-slate-400">제목 수정</label>
+                                                {/* [수정] placeholder 제거하여 입력창 깔끔하게 유지 */}
+                                                <input type="text" className="dday-field outline-none" value={(data.links || []).find(l=>l.id===editingLinkId)?.text || ''} onChange={(e) => { const newText = e.target.value; setData(prev => ({ ...prev, links: (prev.links || []).map(l => l.id === editingLinkId ? {...l, text: newText} : l) })); }} spellCheck={false} />
+                                            </div>
                                             <div className="flex flex-col gap-1"><label className="text-[10px] font-black text-slate-400">URL 입력</label><div className="flex gap-1"><input autoFocus type="text" className="dday-field bg-slate-50 flex-1 outline-none" placeholder="https://..." value={tempUrlVal} onChange={(e) => setTempUrlVal(e.target.value)} spellCheck={false} /><button onClick={saveUrl} className="bg-indigo-600 text-white text-[9px] font-black px-2 py-1.5 rounded flex items-center justify-center shadow-sm">저장</button></div></div>
                                         </div>
                                     )}
