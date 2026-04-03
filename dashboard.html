@@ -127,6 +127,10 @@
         .link-item-row { display: flex; align-items: center; gap: 4px; width: 100%; min-height: 22px; border-bottom: 1px solid #f8fafc; }
         .link-text-btn { text-align: left; font-size: 10px; font-weight: 900; color: #475569; flex: 1; padding: 1px 4px; border-radius: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; outline: none !important; }
         .link-text-btn:hover { background: #f1f5f9; color: #6366f1; }
+
+        .popover-color-picker { display: flex; gap: 4px; padding: 4px; background: white; border: 1px solid #e2e8f0; border-radius: 9999px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); position: absolute; z-index: 1000; }
+        .color-dot { width: 10px; height: 10px; border-radius: 50%; cursor: pointer; border: 1px solid rgba(0,0,0,0.1); transition: transform 0.1s; }
+        .color-dot:hover { transform: scale(1.2); }
     </style>
 </head>
 <body>
@@ -140,6 +144,11 @@
         const BUDGET_SHEET = "교사용_예산";
         const EVAL_SHEET = "교사용_평가";
         const SAVE_RANGE = "A3:G3";
+
+        const COLORS = {
+            BG_WHITE: '#FFFFFF', BG_RED: '#FFF1F2', BG_BLUE: '#EFF6FF',
+            TXT_BLACK: '#1E293B', TXT_RED: '#EF4444', TXT_BLUE: '#2563EB'
+        };
         
         const Icon = ({ name, className, size = 12 }) => {
             const iconRef = useRef(null);
@@ -175,10 +184,11 @@
             const [showTooltip, setShowTooltip] = useState(false);
             const textRef = useRef(null);
             const handleMouseEnter = () => { if (textRef.current) setShowTooltip(textRef.current.scrollWidth > textRef.current.clientWidth); };
+            const content = typeof factor === 'object' ? JSON.stringify(factor) : String(factor || "");
             return (
                 <td className={`text-left px-1 eval-factor-cell ${isFinished ? 'eval-done-text' : ''}`} onMouseEnter={handleMouseEnter}>
-                    <div ref={textRef} className="truncate w-full">{factor}</div>
-                    <span className={`eval-tooltip-text ${showTooltip ? 'show' : ''}`}>{factor}</span>
+                    <div ref={textRef} className="truncate w-full">{content}</div>
+                    <span className={`eval-tooltip-text ${showTooltip ? 'show' : ''}`}>{content}</span>
                 </td>
             );
         };
@@ -196,6 +206,7 @@
 
         const MonthlyPlanItem = memo(({ value, completed, color, onChange, onDelete }) => {
             const textareaRef = useRef(null);
+            const [isHovered, setIsHovered] = useState(false);
             const adjustHeight = useCallback(() => { 
                 if (textareaRef.current) { 
                     textareaRef.current.style.height = "auto"; 
@@ -205,24 +216,34 @@
             useLayoutEffect(() => { adjustHeight(); }, [value, adjustHeight]);
             
             return (
-                <div className="flex w-full group/item relative mb-[1.5px]">
-                    <div className="flex items-center w-full">
-                        <div className="checkbox-container flex items-center justify-center shrink-0 w-[16px] mr-1.5" style={{ height: '18px' }}>
-                            <input type="checkbox" checked={!!completed} onChange={(e) => onChange({completed: e.target.checked})} className="compact-checkbox" />
-                        </div>
-                        <textarea 
-                            ref={textareaRef} 
-                            rows={1} 
-                            onMouseDown={(e) => e.stopPropagation()} 
-                            spellCheck={false} 
-                            className={`item-input-base text-[12px] font-black leading-[1.5] flex-1 ${completed ? 'strikethrough-line' : ''}`} 
-                            style={{ color: completed ? '' : (color || '#1E293B') }} 
-                            value={value} 
-                            onChange={(e) => onChange({text: e.target.value})} 
-                            onInput={adjustHeight} 
-                        />
-                        <button onClick={onDelete} className="text-slate-300 hover:text-red-500 opacity-0 group-hover/item:opacity-100 px-0 m-0 mr-1 shrink-0 transition-opacity flex items-center justify-center h-full"><Icon name="x" size={11} /></button>
+                <div 
+                    className="flex w-full group/item relative mb-[1.5px] items-start overflow-visible"
+                    onMouseEnter={() => setIsHovered(true)}
+                    onMouseLeave={() => setIsHovered(false)}
+                >
+                    <div className="checkbox-container flex items-center justify-center shrink-0 w-[16px] mr-1.5" style={{ height: '18px' }}>
+                        <input type="checkbox" checked={!!completed} onChange={(e) => onChange({completed: e.target.checked})} className="compact-checkbox" />
                     </div>
+                    <textarea 
+                        ref={textareaRef} 
+                        rows={1} 
+                        onMouseDown={(e) => e.stopPropagation()} 
+                        spellCheck={false} 
+                        className={`item-input-base text-[12px] font-black leading-[1.5] flex-1 ${completed ? 'strikethrough-line' : ''}`} 
+                        style={{ color: completed ? '' : (color || COLORS.TXT_BLACK) }} 
+                        value={value} 
+                        onChange={(e) => onChange({text: e.target.value})} 
+                        onInput={adjustHeight} 
+                    />
+                    <button onClick={onDelete} className="text-slate-300 hover:text-red-500 opacity-0 group-hover/item:opacity-100 px-0 m-0 mr-1 shrink-0 transition-opacity flex items-center justify-center h-full"><Icon name="x" size={11} /></button>
+                    
+                    {isHovered && !completed && (
+                        <div className="popover-color-picker" style={{ top: '100%', left: '16px', marginTop: '2px' }}>
+                            <div className="color-dot bg-black" onClick={() => onChange({ color: COLORS.TXT_BLACK })}></div>
+                            <div className="color-dot bg-red-500" onClick={() => onChange({ color: COLORS.TXT_RED })}></div>
+                            <div className="color-dot bg-blue-500" onClick={() => onChange({ color: COLORS.TXT_BLUE })}></div>
+                        </div>
+                    )}
                 </div>
             );
         });
@@ -239,7 +260,7 @@
                             onMouseDown={(e) => e.stopPropagation()} 
                             spellCheck={false} 
                             className={`bg-transparent border-none outline-none text-[12px] font-black w-full p-0 m-0 leading-[1.5] resize-none ${completed ? 'strikethrough-line' : ''}`} 
-                            style={{ color: completed ? '' : (color || '#1E293B'), height: '19px', display: 'block' }} 
+                            style={{ color: completed ? '' : (color || COLORS.TXT_BLACK), height: '19px', display: 'block' }} 
                             value={value} 
                             onChange={(e) => onChange({text: e.target.value})} 
                         />
@@ -268,7 +289,7 @@
                             onMouseDown={(e) => e.stopPropagation()} 
                             spellCheck={false} 
                             className={`bg-transparent border-none outline-none text-[11.5px] font-black w-full p-0 m-0 h-[18px] leading-none ${completed ? 'strikethrough-line text-slate-400' : ''}`} 
-                            style={{ color: completed ? '' : (color || '#1E293B') }} 
+                            style={{ color: completed ? '' : (color || COLORS.TXT_BLACK) }} 
                             value={value} 
                             onChange={(e) => onChange({text: e.target.value})} 
                         />
@@ -289,18 +310,12 @@
             const [mealData, setMealData] = useState([]);
             const [isInitialLoading, setIsInitialLoading] = useState(true);
             const [isSyncing, setIsSyncing] = useState(false);
-            const [isGoalEditPopOpen, setIsGoalEditPopOpen] = useState(false);
-            const [isAddWaterPopOpen, setIsAddWaterPopOpen] = useState(false);
-            const [isLinkAddOpen, setIsLinkAddOpen] = useState(false);
-            const [tempLink, setTempLink] = useState({ name: '', url: 'https://' });
-            const [confirmClear, setConfirmClear] = useState(null); 
-            const [tempGoalVal, setTempGoalVal] = useState('');
-            const [tempAddVal, setTempAddVal] = useState('');
             const [viewDate, setViewDate] = useState(new Date());
+            const [hoveredDate, setHoveredDate] = useState(null);
+            const [confirmClear, setConfirmClear] = useState(null);
 
             const todayStr = useMemo(() => getLocalDateString(now), [now]);
 
-            // [안전 장치] 초기 로딩 완료 후에만 날짜 대조 및 자동 해제 실행
             useEffect(() => {
                 if (!isInitialLoading && data.lastResetDate && data.lastResetDate !== todayStr) {
                     setData(prev => ({
@@ -331,7 +346,6 @@
 
             const updateData = useCallback((updates) => setData(prev => ({ ...prev, ...updates })), []);
 
-            // [핵심] URL 파라미터로 시트 정보를 강제로 지정하여 가장 안정적으로 저장하는 로직
             const saveToCloud = useCallback(async () => {
                 if (isInitialLoading || !GAS_URL) return;
                 setIsSyncing(true);
@@ -345,26 +359,14 @@
                         JSON.stringify({ generalMemo: data.generalMemo, evaluationMemo: data.evaluationMemo }),
                         JSON.stringify({ lastResetDate: data.lastResetDate, dDayDate: data.dDayDate, dDayTitle: data.dDayTitle, completedEvalRows: data.completedEvalRows, schoolInfo: data.schoolInfo })
                     ];
-                    
-                    // URL에 시트 이름과 범위를 명시적으로 포함 (no-cors 모드에서 가장 확실한 방법)
                     const targetUrl = `${GAS_URL}?sheet=${encodeURIComponent(DASHBOARD_SHEET)}&range=${encodeURIComponent(SAVE_RANGE)}`;
-                    
-                    await fetch(targetUrl, { 
-                        method: 'POST', 
-                        mode: 'no-cors', 
-                        body: JSON.stringify({ data: [payload] }) 
-                    });
-                } catch (e) {
-                    console.error("Save Error:", e);
-                } finally {
-                    setIsSyncing(false);
-                }
+                    await fetch(targetUrl, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ data: [payload] }) });
+                } catch (e) { console.error("Save Error:", e); } 
+                finally { setIsSyncing(false); }
             }, [data, isInitialLoading]);
 
             useEffect(() => {
-                const timer = setTimeout(() => {
-                    if (!isInitialLoading) saveToCloud();
-                }, 1500);
+                const timer = setTimeout(() => { if (!isInitialLoading) saveToCloud(); }, 1500);
                 return () => clearTimeout(timer);
             }, [data, isInitialLoading, saveToCloud]);
 
@@ -379,44 +381,52 @@
                         const row = values[0], sj = (s) => { try { return JSON.parse(s); } catch { return null; } };
                         const meta = sj(row[6]) || {};
                         setData({ 
-                            monthlyData: sj(row[0]) || {}, 
-                            routines: sj(row[1]) || [], 
-                            personalRoutines: sj(row[2]) || [], 
+                            monthlyData: sj(row[0]) || {}, routines: sj(row[1]) || [], personalRoutines: sj(row[2]) || [], 
                             ...(sj(row[3]) || { waterTarget: 2000, waterHistory: {}, waterHistoryLogs: {} }), 
-                            links: sj(row[4]) || [], 
-                            ...(sj(row[5]) || { generalMemo: '', evaluationMemo: '' }), 
+                            links: sj(row[4]) || [], ...(sj(row[5]) || { generalMemo: '', evaluationMemo: '' }), 
                             ...meta 
                         });
                     }
-                } catch (e) {
-                    console.error("Load Error:", e);
-                } finally {
-                    setIsInitialLoading(false);
-                    setIsSyncing(false);
-                }
+                } catch (e) { console.error("Load Error:", e); } 
+                finally { setIsInitialLoading(false); setIsSyncing(false); }
             }, []);
 
             const fetchBudgetData = useCallback(async () => {
                 try {
                     const res = await fetch(`${GAS_URL}?sheet=${encodeURIComponent(BUDGET_SHEET)}&range=A1`);
                     const result = await res.json();
-                    if (result) {
-                        let rawData = (Array.isArray(result) && result[0]) ? result[0][0] : result;
-                        let parsed = [];
-                        try {
-                            parsed = typeof rawData === 'string' ? JSON.parse(rawData) : rawData;
-                        } catch(e) { parsed = []; }
-                        
-                        // "budgets" 키를 예산명으로, "amount" 키를 잔액으로 정확히 매핑
-                        const formattedBudgets = Array.isArray(parsed) ? parsed.map(b => ({
-                            name: b.budgets || '항목 없음',
-                            balance: b.amount || 0
-                        })) : [];
-                        
-                        setBudgetData({ budgets: formattedBudgets });
+                    
+                    let rawData = result;
+                    while (Array.isArray(rawData) && rawData.length > 0 && Array.isArray(rawData[0])) {
+                        rawData = rawData[0];
                     }
-                } catch (e) {
-                    console.error("Budget Error:", e);
+                    if (Array.isArray(rawData) && rawData.length === 1 && typeof rawData[0] === 'string') {
+                        rawData = rawData[0];
+                    }
+
+                    let parsed = rawData;
+                    if (typeof rawData === 'string') {
+                        try { parsed = JSON.parse(rawData.replace(/[“”]/g, '"')); } catch (e) { parsed = {}; }
+                    }
+
+                    const budgets = parsed.budgets || [];
+                    const transactions = parsed.transactions || [];
+                    
+                    const formatted = budgets.map(b => {
+                        const totalSpent = transactions
+                            .filter(t => t.budgetId === b.id)
+                            .reduce((acc, curr) => acc + Number(curr.amount || 0), 0);
+                        
+                        return { 
+                            name: String(b.name || '항목 없음'), 
+                            balance: (Number(b.plannedAmount) || 0) - totalSpent 
+                        };
+                    });
+                    
+                    setBudgetData({ budgets: formatted });
+                } catch (e) { 
+                    console.error("Budget Error:", e); 
+                    setBudgetData({ budgets: [] });
                 }
             }, []);
 
@@ -424,14 +434,24 @@
                 try {
                     const res = await fetch(`${GAS_URL}?sheet=${encodeURIComponent(EVAL_SHEET)}&range=A3:H100`);
                     const result = await res.json();
-                    if (Array.isArray(result)) {
+                    let values = typeof result === 'string' ? JSON.parse(result) : result;
+                    if (Array.isArray(values)) {
                         let lastSub = "";
-                        setEvalData(result.filter(r => r.some(c => c && c.toString().trim() !== "")).map((r, i) => {
+                        setEvalData(values.filter(r => r.some(c => c && c.toString().trim() !== "")).map((r, i) => {
                             const subName = (r[0] && r[0].toString().trim() !== "") ? r[0] : lastSub; lastSub = subName;
-                            return { sheetRow: i + 3, subject: subName, unit: r[1], factor: r[3], n1: r[4] || "", n2: r[5] || "", n3: r[6] || "", n4: r[7] || "" };
+                            return { 
+                                sheetRow: i + 3, 
+                                subject: String(subName), 
+                                unit: String(r[1] || ""), 
+                                factor: r[3], 
+                                n1: String(r[4] || ""), 
+                                n2: String(r[5] || ""), 
+                                n3: String(r[6] || ""), 
+                                n4: String(r[7] || "") 
+                            };
                         }));
                     }
-                } catch {}
+                } catch (e) { console.error("Eval Error:", e); }
             }, []);
 
             useEffect(() => {
@@ -444,33 +464,31 @@
                         if (resJson.mealServiceDietInfo) {
                             const dishes = resJson.mealServiceDietInfo[1].row[0].DDISH_NM.replace(/\([0-9.]+\)/g, '').split('<br/>').map(s => s.trim()).filter(s => s);
                             setMealData(dishes);
-                        }
-                    } catch (e) {}
+                        } else { setMealData([]); }
+                    } catch (e) { setMealData([]); }
                 };
                 loadMeal();
             }, [data.schoolInfo, todayStr]);
 
-            useEffect(() => { loadFromCloud(); fetchBudgetData(); fetchEvalData(); }, [loadFromCloud, fetchBudgetData, fetchEvalData]);
+            useEffect(() => {
+                const init = async () => {
+                    await loadFromCloud();
+                    fetchBudgetData();
+                    fetchEvalData();
+                };
+                init();
+            }, [loadFromCloud, fetchBudgetData, fetchEvalData]);
 
-            // 평가 계획 우선순위 정렬 로직 (국어2, 수학1, 통합2)
             const prioritizedEvalData = useMemo(() => {
                 if (!evalData.length) return [];
                 const finishedRows = data.completedEvalRows || [], subjectOrder = ['국어', '수학', '통합'];
-                const subSorter = (a, b) => {
-                    const idxA = subjectOrder.indexOf(a.subject), idxB = subjectOrder.indexOf(b.subject);
-                    const wA = idxA === -1 ? 999 : idxA, wB = idxB === -1 ? 999 : idxB;
-                    if (wA !== wB) return wA - wB;
-                    return String(a.unit || "").localeCompare(String(b.unit || ""), 'ko');
-                };
                 const incomplete = evalData.filter(d => !finishedRows.includes(d.sheetRow)), complete = evalData.filter(d => finishedRows.includes(d.sheetRow));
                 const priorityRows = [], usedIds = new Set(), counts = { '국어': 2, '수학': 1, '통합': 2 };
                 subjectOrder.forEach(sub => {
                     const subItems = incomplete.filter(d => d.subject === sub).sort((a, b) => String(a.unit || "").localeCompare(String(b.unit || ""), 'ko'));
                     subItems.slice(0, counts[sub] || 0).forEach(item => { priorityRows.push(item); usedIds.add(item.sheetRow); });
                 });
-                const otherIncompleteRows = incomplete.filter(d => !usedIds.has(d.sheetRow)).sort(subSorter);
-                const sortedCompleteRows = complete.sort(subSorter);
-                return [...priorityRows, ...otherIncompleteRows, ...sortedCompleteRows];
+                return [...priorityRows, ...incomplete.filter(d => !usedIds.has(d.sheetRow)), ...complete];
             }, [evalData, data.completedEvalRows]);
 
             const addNewItem = (type) => {
@@ -491,14 +509,6 @@
                 setEvalData(prev => prev.map(item => item.sheetRow === rowObj.sheetRow ? { ...item, [colKey]: nextVal } : item));
                 const colLetter = { n1: 'E', n2: 'F', n3: 'G', n4: 'H' }[colKey];
                 try { await fetch(`${GAS_URL}?sheet=${encodeURIComponent(EVAL_SHEET)}`, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ range: `${colLetter}${rowObj.sheetRow}`, data: [[nextVal]] }) }); } catch (e) {}
-            };
-
-            const addNewLink = () => {
-                if (tempLink.name && tempLink.url) {
-                    updateData({ links: [...data.links, { id: Date.now(), text: tempLink.name, url: tempLink.url }] });
-                    setTempLink({ name: '', url: 'https://' });
-                    setIsLinkAddOpen(false);
-                }
             };
 
             return (
@@ -522,10 +532,16 @@
                                 {['월','화','수','목','금','토','일'].map((d,i)=>(<div key={d} className={`header-cell ${i === 5 ? 'text-blue-500' : i === 6 ? 'text-red-400' : 'text-slate-400'}`}>{d}</div>))}
                                 {calendarDays.map((date, i) => {
                                     if (!date) return <div key={i} className="table-cell bg-white"></div>;
-                                    const dStr = getLocalDateString(date), dayData = (data.monthlyData || {})[dStr] || { items:[], bgColor: '#FFFFFF' };
-                                    const isHolidayBg = dayData.bgColor === '#FFF1F2';
+                                    const dStr = getLocalDateString(date), dayData = (data.monthlyData || {})[dStr] || { items:[], bgColor: COLORS.BG_WHITE };
+                                    const isHolidayBg = dayData.bgColor === COLORS.BG_RED;
                                     return (
-                                        <div key={dStr} className={`table-cell group ${dStr === todayStr ? 'today-highlight' : ''}`} style={{ backgroundColor: dayData.bgColor }}>
+                                        <div 
+                                            key={dStr} 
+                                            className={`table-cell group ${dStr === todayStr ? 'today-highlight' : ''}`} 
+                                            style={{ backgroundColor: dayData.bgColor }}
+                                            onMouseEnter={() => setHoveredDate(dStr)}
+                                            onMouseLeave={() => setHoveredDate(null)}
+                                        >
                                             <div className="flex items-center gap-1 h-[20px] px-0">
                                                 <span className={`text-[12px] font-black ${date.getDay() === 0 || isHolidayBg ? 'text-red-500' : date.getDay() === 6 ? 'text-blue-500' : 'text-slate-400'}`}>{date.getDate()}</span>
                                                 <input type="text" value={dayData.holiday||''} onChange={(e) => updateData({monthlyData: {...data.monthlyData, [dStr]: {...dayData, holiday: e.target.value}}})} style={{ color: isHolidayBg ? '#ef4444' : '#2563eb' }} className="bg-transparent text-[12px] font-black w-full outline-none truncate" spellCheck={false} />
@@ -535,7 +551,15 @@
                                                     <MonthlyPlanItem key={item.id} value={item.text} completed={item.completed} color={item.color} onChange={(u)=>updateData({monthlyData: {...data.monthlyData, [dStr]: {...dayData, items: dayData.items.map(it=>it.id===item.id?{...it,...u}:it)}}})} onDelete={()=>updateData({monthlyData: {...data.monthlyData, [dStr]: {...dayData, items: dayData.items.filter(it=>it.id!==item.id)}}})} />
                                                 ))}
                                             </div>
-                                            <button onClick={()=>updateData({monthlyData: {...data.monthlyData, [dStr]: {...dayData, items: [...dayData.items, {id:Date.now(), text:'', completed:false}]}}})} className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 p-0.5 bg-indigo-600 text-white rounded w-[16px] h-[16px] flex items-center justify-center transition-all"><Icon name="plus" size={10}/></button>
+                                            <button onClick={()=>updateData({monthlyData: {...data.monthlyData, [dStr]: {...dayData, items: [...(dayData.items||[]), {id:Date.now(), text:'', completed:false}]}}})} className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 p-0.5 bg-indigo-600 text-white rounded w-[16px] h-[16px] flex items-center justify-center transition-all"><Icon name="plus" size={10}/></button>
+                                            
+                                            {hoveredDate === dStr && (
+                                                <div className="popover-color-picker" style={{ bottom: '4px', right: '4px' }}>
+                                                    <div className="color-dot bg-white" onClick={() => updateData({monthlyData: {...data.monthlyData, [dStr]: {...dayData, bgColor: COLORS.BG_WHITE}}})}></div>
+                                                    <div className="color-dot" style={{ backgroundColor: COLORS.BG_RED }} onClick={() => updateData({monthlyData: {...data.monthlyData, [dStr]: {...dayData, bgColor: COLORS.BG_RED}}})}></div>
+                                                    <div className="color-dot" style={{ backgroundColor: COLORS.BG_BLUE }} onClick={() => updateData({monthlyData: {...data.monthlyData, [dStr]: {...dayData, bgColor: COLORS.BG_BLUE}}})}></div>
+                                                </div>
+                                            )}
                                         </div>
                                     );
                                 })}
@@ -548,13 +572,12 @@
                             <section className="glass-card h-[125px] overflow-visible z-[1000]">
                                 <header className="widget-header" style={{ height: '22px' }}><div className="flex items-center gap-1.5"><Icon name="droplets" className="text-blue-600" size={12} /><h2 className="font-black text-[14px]">수분 섭취</h2></div></header>
                                 <div className="flex flex-col items-center justify-start flex-1 pt-[6px] pb-3 relative px-2 gap-1.5">
-                                    <button onClick={()=>setIsGoalEditPopOpen(!isGoalEditPopOpen)} className="text-[9px] font-black text-slate-400">Goal: {data.waterTarget}ml</button>
+                                    <div className="text-[9px] font-black text-slate-400">Goal: {data.waterTarget}ml</div>
                                     <div className="text-[22px] font-black text-blue-600 leading-none">{waterIntake} ml</div>
                                     <div className="w-full px-2"><div className="w-full water-bar-custom bg-blue-50 rounded-full border border-blue-100 overflow-hidden shadow-inner h-[8px]"><div className="h-full bg-gradient-to-r from-blue-400 to-blue-600 transition-all duration-700" style={{ width: `${Math.min((waterIntake/data.waterTarget)*100, 100)}%` }}></div></div></div>
                                     <div className="flex gap-1 w-full relative items-center">
                                         <button onClick={()=>updateData({waterHistory:{...data.waterHistory,[todayStr]:waterIntake+250}})} className="flex-1 bg-blue-50 text-blue-600 h-6 rounded text-[10px] font-black">+250</button>
                                         <button onClick={()=>updateData({waterHistory:{...data.waterHistory,[todayStr]:waterIntake+500}})} className="flex-1 bg-blue-600 text-white h-6 rounded text-[10px] font-black">+500</button>
-                                        <button onClick={()=>setIsAddWaterPopOpen(!isAddWaterPopOpen)} className="w-6 h-6 bg-indigo-50 text-indigo-600 rounded flex items-center justify-center transition-colors"><Icon name="plus" size={12}/></button>
                                         <button onClick={()=>updateData({waterHistory:{...data.waterHistory,[todayStr]:0}})} className="w-6 h-6 bg-slate-50 text-slate-400 rounded flex items-center justify-center"><Icon name="rotate-ccw" size={12}/></button>
                                     </div>
                                 </div>
@@ -610,7 +633,6 @@
                             <section className="glass-card h-[135px] overflow-visible transition-all z-10">
                                 <header className="widget-header" style={{ height: '22px' }}>
                                     <div className="flex items-center gap-1.5"><Icon name="link" className="text-indigo-500" size={12} /><h2 className="font-black text-[14px]">링크</h2></div>
-                                    <button onClick={()=>setIsLinkAddOpen(!isLinkAddOpen)} className="text-slate-300 hover:text-indigo-600 transition-colors mr-1"><Icon name="plus" size={13}/></button>
                                 </header>
                                 <div className="flex-grow overflow-y-auto custom-scrollbar px-2 pt-[2px] pb-1">
                                     {(data.links || []).map(link => (
@@ -646,10 +668,33 @@
                             </section>
 
                             <section className="glass-card h-[135px] overflow-y-auto hide-scrollbar">
-                                <header className="widget-header" style={{ height: '22px' }}><div className="flex items-center gap-1.5"><Icon name="wallet" className="text-blue-500" size={12} /><h2 className="font-black text-[14px]">예산 현황</h2></div></header>
+                                <header className="widget-header" style={{ height: '22px' }}>
+                                    <div className="flex items-center gap-1.5">
+                                        <Icon name="wallet" className="text-blue-500" size={12} />
+                                        <h2 className="font-black text-[14px]">예산 현황</h2>
+                                    </div>
+                                    <button 
+                                        onClick={fetchBudgetData} 
+                                        className="mr-1 p-0.5 hover:bg-slate-100 rounded text-slate-400 hover:text-blue-500 transition-colors"
+                                        title="새로고침"
+                                    >
+                                        <Icon name="rotate-ccw" size={12} />
+                                    </button>
+                                </header>
                                 <table className="budget-table">
                                     <thead><tr><th>예산명</th><th>잔액</th></tr></thead>
-                                    <tbody>{(budgetData.budgets || []).map((b,i) => (<tr key={i}><td>{b.name}</td><td className="text-blue-600 font-black">{b.balance.toLocaleString()}</td></tr>))}</tbody>
+                                    <tbody>
+                                        {budgetData.budgets && budgetData.budgets.length > 0 ? (
+                                            budgetData.budgets.map((b, i) => (
+                                                <tr key={i}>
+                                                    <td className="text-left px-2">{b.name}</td>
+                                                    <td className="text-blue-600 font-black text-right px-2">{Number(b.balance || 0).toLocaleString()}원</td>
+                                                </tr>
+                                            ))
+                                        ) : (
+                                            <tr><td colSpan="2" className="text-slate-300 py-4">항목 없음</td></tr>
+                                        )}
+                                    </tbody>
                                 </table>
                             </section>
 
