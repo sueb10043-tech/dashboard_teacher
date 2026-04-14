@@ -107,16 +107,28 @@
         .budget-table th { background: #f8fafc; color: #64748b; font-weight: 900; padding: 4px 2px; border-bottom: 1px solid #e2e8f0; text-align: center; position: sticky; top: 0; z-index: 10; }
         .budget-table td { padding: 4px 2px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; line-height: 1.2; text-align: center; }
         
-        .eval-table { width: 100%; border-collapse: collapse; border-spacing: 0; table-layout: fixed; }
+        /* [수정] 평가 계획 드래그 해결을 위한 스타일 보강 */
+        .eval-table { 
+            width: 100%; border-collapse: collapse; border-spacing: 0; table-layout: fixed; 
+            user-select: text !important; -webkit-user-select: text !important; -moz-user-select: text !important; -ms-user-select: text !important;
+            pointer-events: auto !important;
+        }
         .eval-table th { background: #f8fafc; color: #64748b; font-weight: 900; padding: 4px 1px; border-bottom: 1px solid #e2e8f0; text-align: center; position: sticky; top: 0; z-index: 10; font-size: 8.5px; height: 18px; }
         .eval-table td { 
             padding: 3px 1px 1px 1px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; 
             line-height: 1.2; text-align: center; overflow: visible; white-space: nowrap; 
             font-weight: 800; font-size: 10.5px; height: 22px; position: relative;
-            user-select: text !important; -webkit-user-select: text !important;
+            user-select: text !important; -webkit-user-select: text !important; -moz-user-select: text !important; -ms-user-select: text !important;
+            pointer-events: auto !important;
         }
         
-        .eval-factor-cell { cursor: default; position: relative; overflow: visible !important; }
+        .eval-factor-cell { 
+            cursor: default; position: relative; overflow: visible !important; 
+            user-select: text !important; -webkit-user-select: text !important; -moz-user-select: text !important; -ms-user-select: text !important;
+            pointer-events: auto !important;
+        }
+        /* [수정 끝] */
+
         .eval-tooltip-text { 
             visibility: hidden; opacity: 0; position: absolute; top: 100%; left: 50%; transform: translateX(-50%);
             background: #1e293b; color: #fff; text-align: center; padding: 6px 12px; border-radius: 6px;
@@ -198,7 +210,7 @@
             const content = typeof factor === 'object' ? JSON.stringify(factor) : String(factor || "");
             return (
                 <td className={`text-left px-1 eval-factor-cell ${isFinished ? 'eval-done-text' : ''}`} onMouseEnter={handleMouseEnter}>
-                    <div ref={textRef} className="truncate w-full">{content}</div>
+                    <div ref={textRef} className="truncate w-full selectable-text">{content}</div>
                     <span className={`eval-tooltip-text ${showTooltip ? 'show' : ''}`}>{content}</span>
                 </td>
             );
