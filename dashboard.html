@@ -109,7 +109,12 @@
         
         .eval-table { width: 100%; border-collapse: collapse; border-spacing: 0; table-layout: fixed; }
         .eval-table th { background: #f8fafc; color: #64748b; font-weight: 900; padding: 4px 1px; border-bottom: 1px solid #e2e8f0; text-align: center; position: sticky; top: 0; z-index: 10; font-size: 8.5px; height: 18px; }
-        .eval-table td { padding: 3px 1px 1px 1px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; line-height: 1.2; text-align: center; overflow: visible; white-space: nowrap; font-weight: 800; font-size: 10.5px; height: 22px; position: relative; }
+        .eval-table td { 
+            padding: 3px 1px 1px 1px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; 
+            line-height: 1.2; text-align: center; overflow: visible; white-space: nowrap; 
+            font-weight: 800; font-size: 10.5px; height: 22px; position: relative;
+            user-select: text !important; -webkit-user-select: text !important;
+        }
         
         .eval-factor-cell { cursor: default; position: relative; overflow: visible !important; }
         .eval-tooltip-text { 
@@ -125,12 +130,17 @@
         .dday-badge { cursor: pointer; background: #6366f1; color: white; padding: 4px 10px; border-radius: 9999px; font-size: 11px; font-weight: 900; transition: all 0.2s; box-shadow: 0 2px 4px rgba(99, 102, 241, 0.2); display: flex; align-items: center; gap: 6px; }
         
         .link-item-row { display: flex; align-items: center; gap: 4px; width: 100%; min-height: 22px; border-bottom: 1px solid #f8fafc; }
-        .link-text-btn { text-align: left; font-size: 10px; font-weight: 900; color: #475569; flex: 1; padding: 1px 4px; border-radius: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; outline: none !important; }
+        .link-text-btn { text-align: left; font-size: 10.5px; font-weight: 900; color: #475569; flex: 1; padding: 1px 4px; border-radius: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; outline: none !important; }
         .link-text-btn:hover { background: #f1f5f9; color: #6366f1; }
 
         .popover-color-picker { display: flex; gap: 4px; padding: 4px; background: white; border: 1px solid #e2e8f0; border-radius: 9999px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); position: absolute; z-index: 1000; }
         .color-dot { width: 10px; height: 10px; border-radius: 50%; cursor: pointer; border: 1px solid rgba(0,0,0,0.1); transition: transform 0.1s; }
         .color-dot:hover { transform: scale(1.2); }
+
+        /* 월 선택 창용 스타일 */
+        .month-picker-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; padding: 8px; }
+        .month-btn { padding: 4px; border-radius: 6px; text-align: center; font-weight: 800; font-size: 11px; transition: all 0.1s; }
+        .month-btn:hover { background: #e0e7ff; color: #4338ca; }
     </style>
 </head>
 <body>
@@ -144,16 +154,17 @@
         const BUDGET_SHEET = "교사용_예산";
         const EVAL_SHEET = "교사용_평가";
         const SAVE_RANGE = "A3:G3";
+        const BUDGET_EXTERNAL_LINK = "https://sueb10043-tech.github.io/schoolbudget/"; // [업데이트] 예산 현황 주소
 
         const COLORS = {
             BG_WHITE: '#FFFFFF', BG_RED: '#FFF1F2', BG_BLUE: '#EFF6FF',
             TXT_BLACK: '#1E293B', TXT_RED: '#EF4444', TXT_BLUE: '#2563EB'
         };
         
-        const Icon = ({ name, className, size = 12 }) => {
+        const Icon = ({ name, className, size = 12, onClick }) => {
             const iconRef = useRef(null);
             useEffect(() => { if (window.lucide && iconRef.current) { window.lucide.createIcons({ elements: [iconRef.current] }); } }, [name, size]);
-            return ( <span key={`${name}-${size}`} className="inline-flex items-center justify-center shrink-0 overflow-hidden" style={{ width: size, height: size }}> <i ref={iconRef} data-lucide={name} className={className} style={{ width: size, height: size }}></i> </span> );
+            return ( <span key={`${name}-${size}`} onClick={onClick} className={`inline-flex items-center justify-center shrink-0 overflow-hidden ${onClick ? 'cursor-pointer' : ''}`} style={{ width: size, height: size }}> <i ref={iconRef} data-lucide={name} className={className} style={{ width: size, height: size }}></i> </span> );
         };
 
         const getSubjectColor = (sub) => {
@@ -313,6 +324,9 @@
             const [viewDate, setViewDate] = useState(new Date());
             const [hoveredDate, setHoveredDate] = useState(null);
             const [confirmClear, setConfirmClear] = useState(null);
+            const [isLinkAddOpen, setIsLinkAddOpen] = useState(false);
+            const [tempLink, setTempLink] = useState({ name: '', url: 'https://' });
+            const [isMonthPickerOpen, setIsMonthPickerOpen] = useState(false); // [복구] 월 선택 상태
 
             const todayStr = useMemo(() => getLocalDateString(now), [now]);
 
@@ -511,13 +525,36 @@
                 try { await fetch(`${GAS_URL}?sheet=${encodeURIComponent(EVAL_SHEET)}`, { method: 'POST', mode: 'no-cors', body: JSON.stringify({ range: `${colLetter}${rowObj.sheetRow}`, data: [[nextVal]] }) }); } catch (e) {}
             };
 
+            const addNewLink = () => {
+                if (tempLink.name && tempLink.url) {
+                    updateData({ links: [...data.links, { id: Date.now(), text: tempLink.name, url: tempLink.url }] });
+                    setTempLink({ name: '', url: 'https://' });
+                    setIsLinkAddOpen(false);
+                }
+            };
+
             return (
                 <div className="dashboard-container">
                     <section className="calendar-section">
                         <div className="glass-card h-full">
                             <header className="flex items-center justify-between h-10 px-4 shrink-0">
                                 <div className="flex items-center gap-2 relative flex-1 min-w-0">
-                                    <Icon name="calendar-days" size={14} className="text-indigo-600" />
+                                    <Icon name="calendar-days" onClick={() => setIsMonthPickerOpen(!isMonthPickerOpen)} size={14} className="text-indigo-600 hover:scale-110 transition-transform" />
+                                    {/* [복구] 월 선택 팝업 */}
+                                    {isMonthPickerOpen && (
+                                        <div className="popover-base p-2 w-48 left-0 top-7 z-[200]">
+                                            <div className="flex justify-between items-center mb-2 px-1">
+                                                <button onClick={() => setViewDate(new Date(viewDate.getFullYear() - 1, viewDate.getMonth(), 1))}><Icon name="chevrons-left" size={14}/></button>
+                                                <span className="font-black text-[12px]">{viewDate.getFullYear()}년</span>
+                                                <button onClick={() => setViewDate(new Date(viewDate.getFullYear() + 1, viewDate.getMonth(), 1))}><Icon name="chevrons-right" size={14}/></button>
+                                            </div>
+                                            <div className="month-picker-grid">
+                                                {Array.from({length: 12}, (_, i) => (
+                                                    <button key={i} onClick={() => { setViewDate(new Date(viewDate.getFullYear(), i, 1)); setIsMonthPickerOpen(false); }} className={`month-btn ${viewDate.getMonth() === i ? 'bg-indigo-600 text-white' : 'bg-slate-50 text-slate-700'}`}>{i + 1}월</button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
                                     <h2 className="font-black text-[15px] text-slate-800 tracking-tight truncate">{viewDate.getFullYear()}년 {viewDate.getMonth()+1}월 월별 계획</h2>
                                     <div className="dday-badge ml-2"><Icon name="flag" size={10} /><span>{data.dDayDate ? `${data.dDayTitle} ${dDayValue}` : "D-Day"}</span></div>
                                 </div>
@@ -633,11 +670,24 @@
                             <section className="glass-card h-[135px] overflow-visible transition-all z-10">
                                 <header className="widget-header" style={{ height: '22px' }}>
                                     <div className="flex items-center gap-1.5"><Icon name="link" className="text-indigo-500" size={12} /><h2 className="font-black text-[14px]">링크</h2></div>
+                                    <button onClick={()=>setIsLinkAddOpen(!isLinkAddOpen)} className="text-slate-300 hover:text-indigo-600 transition-colors mr-1"><Icon name="plus" size={13}/></button>
                                 </header>
-                                <div className="flex-grow overflow-y-auto custom-scrollbar px-2 pt-[2px] pb-1">
+                                <div className="flex-grow relative overflow-y-auto custom-scrollbar px-2 pt-[2px] pb-1">
+                                    {/* [수정] 링크 추가 창을 위젯 내부에 고정 */}
+                                    {isLinkAddOpen && (
+                                        <div className="absolute inset-0 bg-white/95 z-[50] flex flex-col p-2">
+                                            <h4 className="font-black text-[11px] mb-1">새 링크 추가</h4>
+                                            <input type="text" placeholder="이름" className="w-full p-1 mb-1 border rounded text-[10px] font-black outline-none" value={tempLink.name} onChange={e=>setTempLink({...tempLink, name: e.target.value})} />
+                                            <input type="text" placeholder="URL" className="w-full p-1 mb-2 border rounded text-[10px] font-black outline-none" value={tempLink.url} onChange={e=>setTempLink({...tempLink, url: e.target.value})} />
+                                            <div className="flex gap-1">
+                                                <button onClick={()=>setIsLinkAddOpen(false)} className="flex-1 bg-slate-100 h-6 rounded text-[10px] font-black">취소</button>
+                                                <button onClick={addNewLink} className="flex-1 bg-indigo-600 text-white h-6 rounded text-[10px] font-black">추가</button>
+                                            </div>
+                                        </div>
+                                    )}
                                     {(data.links || []).map(link => (
                                         <div key={link.id} className="link-item-row group">
-                                            <button onClick={()=>window.open(link.url,'_blank')} className="link-text-btn truncate font-black text-[10px]">{link.text}</button>
+                                            <button onClick={()=>window.open(link.url,'_blank')} className="link-text-btn truncate font-black">{link.text}</button>
                                             <button onClick={()=>updateData({links: data.links.filter(l=>l.id!==link.id)})} className="text-slate-200 hover:text-red-500 ml-auto opacity-0 group-hover/item:opacity-100 transition-opacity"><Icon name="x" size={8}/></button>
                                         </div>
                                     ))}
@@ -673,13 +723,22 @@
                                         <Icon name="wallet" className="text-blue-500" size={12} />
                                         <h2 className="font-black text-[14px]">예산 현황</h2>
                                     </div>
-                                    <button 
-                                        onClick={fetchBudgetData} 
-                                        className="mr-1 p-0.5 hover:bg-slate-100 rounded text-slate-400 hover:text-blue-500 transition-colors"
-                                        title="새로고침"
-                                    >
-                                        <Icon name="rotate-ccw" size={12} />
-                                    </button>
+                                    <div className="flex items-center gap-1">
+                                        <button 
+                                            onClick={() => window.open(BUDGET_EXTERNAL_LINK, '_blank')} 
+                                            className="p-0.5 hover:bg-slate-100 rounded text-slate-400 hover:text-indigo-500 transition-colors"
+                                            title="예산 관리 사이트"
+                                        >
+                                            <Icon name="external-link" size={12} />
+                                        </button>
+                                        <button 
+                                            onClick={fetchBudgetData} 
+                                            className="mr-1 p-0.5 hover:bg-slate-100 rounded text-slate-400 hover:text-blue-500 transition-colors"
+                                            title="새로고침"
+                                        >
+                                            <Icon name="rotate-ccw" size={12} />
+                                        </button>
+                                    </div>
                                 </header>
                                 <table className="budget-table">
                                     <thead><tr><th>예산명</th><th>잔액</th></tr></thead>
