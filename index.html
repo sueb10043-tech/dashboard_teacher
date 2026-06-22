@@ -107,7 +107,6 @@
         .budget-table th { background: #f8fafc; color: #64748b; font-weight: 900; padding: 4px 2px; border-bottom: 1px solid #e2e8f0; text-align: center; position: sticky; top: 0; z-index: 10; }
         .budget-table td { padding: 4px 2px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; line-height: 1.2; text-align: center; }
         
-        /* [수정] 평가 계획 드래그 해결을 위한 스타일 보강 */
         .eval-table { 
             width: 100%; border-collapse: collapse; border-spacing: 0; table-layout: fixed; 
             user-select: text !important; -webkit-user-select: text !important; -moz-user-select: text !important; -ms-user-select: text !important;
@@ -127,7 +126,6 @@
             user-select: text !important; -webkit-user-select: text !important; -moz-user-select: text !important; -ms-user-select: text !important;
             pointer-events: auto !important;
         }
-        /* [수정 끝] */
 
         .eval-tooltip-text { 
             visibility: hidden; opacity: 0; position: absolute; top: 100%; left: 50%; transform: translateX(-50%);
@@ -149,7 +147,6 @@
         .color-dot { width: 10px; height: 10px; border-radius: 50%; cursor: pointer; border: 1px solid rgba(0,0,0,0.1); transition: transform 0.1s; }
         .color-dot:hover { transform: scale(1.2); }
 
-        /* 월 선택 창용 스타일 */
         .month-picker-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; padding: 8px; }
         .month-btn { padding: 4px; border-radius: 6px; text-align: center; font-weight: 800; font-size: 11px; transition: all 0.1s; }
         .month-btn:hover { background: #e0e7ff; color: #4338ca; }
@@ -166,7 +163,7 @@
         const BUDGET_SHEET = "교사용_예산";
         const EVAL_SHEET = "교사용_평가";
         const SAVE_RANGE = "A3:G3";
-        const BUDGET_EXTERNAL_LINK = "https://sueb10043-tech.github.io/schoolbudget/"; // [업데이트] 예산 현황 주소
+        const BUDGET_EXTERNAL_LINK = "https://sueb10043-tech.github.io/schoolbudget/";
 
         const COLORS = {
             BG_WHITE: '#FFFFFF', BG_RED: '#FFF1F2', BG_BLUE: '#EFF6FF',
@@ -338,7 +335,7 @@
             const [confirmClear, setConfirmClear] = useState(null);
             const [isLinkAddOpen, setIsLinkAddOpen] = useState(false);
             const [tempLink, setTempLink] = useState({ name: '', url: 'https://' });
-            const [isMonthPickerOpen, setIsMonthPickerOpen] = useState(false); // [복구] 월 선택 상태
+            const [isMonthPickerOpen, setIsMonthPickerOpen] = useState(false);
 
             const todayStr = useMemo(() => getLocalDateString(now), [now]);
 
@@ -396,11 +393,14 @@
                 return () => clearTimeout(timer);
             }, [data, isInitialLoading, saveToCloud]);
 
+            // ★ 수정: GET 요청에 credentials: 'omit' 추가
             const loadFromCloud = useCallback(async () => {
                 if (!GAS_URL) return;
                 setIsSyncing(true);
                 try {
-                    const res = await fetch(`${GAS_URL}?sheet=${encodeURIComponent(DASHBOARD_SHEET)}&range=${SAVE_RANGE}`);
+                    const res = await fetch(`${GAS_URL}?sheet=${encodeURIComponent(DASHBOARD_SHEET)}&range=${SAVE_RANGE}`, {
+                        credentials: 'omit'
+                    });
                     const result = await res.json();
                     let values = typeof result === 'string' ? JSON.parse(result) : result;
                     if (Array.isArray(values) && values[0]) {
@@ -417,9 +417,12 @@
                 finally { setIsInitialLoading(false); setIsSyncing(false); }
             }, []);
 
+            // ★ 수정: GET 요청에 credentials: 'omit' 추가
             const fetchBudgetData = useCallback(async () => {
                 try {
-                    const res = await fetch(`${GAS_URL}?sheet=${encodeURIComponent(BUDGET_SHEET)}&range=A1`);
+                    const res = await fetch(`${GAS_URL}?sheet=${encodeURIComponent(BUDGET_SHEET)}&range=A1`, {
+                        credentials: 'omit'
+                    });
                     const result = await res.json();
                     
                     let rawData = result;
@@ -432,7 +435,7 @@
 
                     let parsed = rawData;
                     if (typeof rawData === 'string') {
-                        try { parsed = JSON.parse(rawData.replace(/[“”]/g, '"')); } catch (e) { parsed = {}; }
+                        try { parsed = JSON.parse(rawData.replace(/[""]/g, '"')); } catch (e) { parsed = {}; }
                     }
 
                     const budgets = parsed.budgets || [];
@@ -456,9 +459,12 @@
                 }
             }, []);
 
+            // ★ 수정: GET 요청에 credentials: 'omit' 추가
             const fetchEvalData = useCallback(async () => {
                 try {
-                    const res = await fetch(`${GAS_URL}?sheet=${encodeURIComponent(EVAL_SHEET)}&range=A3:H100`);
+                    const res = await fetch(`${GAS_URL}?sheet=${encodeURIComponent(EVAL_SHEET)}&range=A3:H100`, {
+                        credentials: 'omit'
+                    });
                     const result = await res.json();
                     let values = typeof result === 'string' ? JSON.parse(result) : result;
                     if (Array.isArray(values)) {
@@ -552,7 +558,6 @@
                             <header className="flex items-center justify-between h-10 px-4 shrink-0">
                                 <div className="flex items-center gap-2 relative flex-1 min-w-0">
                                     <Icon name="calendar-days" onClick={() => setIsMonthPickerOpen(!isMonthPickerOpen)} size={14} className="text-indigo-600 hover:scale-110 transition-transform" />
-                                    {/* [복구] 월 선택 팝업 */}
                                     {isMonthPickerOpen && (
                                         <div className="popover-base p-2 w-48 left-0 top-7 z-[200]">
                                             <div className="flex justify-between items-center mb-2 px-1">
@@ -685,7 +690,6 @@
                                     <button onClick={()=>setIsLinkAddOpen(!isLinkAddOpen)} className="text-slate-300 hover:text-indigo-600 transition-colors mr-1"><Icon name="plus" size={13}/></button>
                                 </header>
                                 <div className="flex-grow relative overflow-y-auto custom-scrollbar px-2 pt-[2px] pb-1">
-                                    {/* [수정] 링크 추가 창을 위젯 내부에 고정 */}
                                     {isLinkAddOpen && (
                                         <div className="absolute inset-0 bg-white/95 z-[50] flex flex-col p-2">
                                             <h4 className="font-black text-[11px] mb-1">새 링크 추가</h4>
@@ -736,20 +740,8 @@
                                         <h2 className="font-black text-[14px]">예산 현황</h2>
                                     </div>
                                     <div className="flex items-center gap-1">
-                                        <button 
-                                            onClick={() => window.open(BUDGET_EXTERNAL_LINK, '_blank')} 
-                                            className="p-0.5 hover:bg-slate-100 rounded text-slate-400 hover:text-indigo-500 transition-colors"
-                                            title="예산 관리 사이트"
-                                        >
-                                            <Icon name="external-link" size={12} />
-                                        </button>
-                                        <button 
-                                            onClick={fetchBudgetData} 
-                                            className="mr-1 p-0.5 hover:bg-slate-100 rounded text-slate-400 hover:text-blue-500 transition-colors"
-                                            title="새로고침"
-                                        >
-                                            <Icon name="rotate-ccw" size={12} />
-                                        </button>
+                                        <button onClick={() => window.open(BUDGET_EXTERNAL_LINK, '_blank')} className="p-0.5 hover:bg-slate-100 rounded text-slate-400 hover:text-indigo-500 transition-colors" title="예산 관리 사이트"><Icon name="external-link" size={12} /></button>
+                                        <button onClick={fetchBudgetData} className="mr-1 p-0.5 hover:bg-slate-100 rounded text-slate-400 hover:text-blue-500 transition-colors" title="새로고침"><Icon name="rotate-ccw" size={12} /></button>
                                     </div>
                                 </header>
                                 <table className="budget-table">
